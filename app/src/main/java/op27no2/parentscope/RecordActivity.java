@@ -1,25 +1,22 @@
 package op27no2.parentscope;
 
-import android.Manifest;
-import android.app.ActivityManager;
-import android.app.AppOpsManager;
+import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
+import android.content.ServiceConnection;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.MediaRecorder;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.provider.Settings;
-import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.AppCompatActivity;
+import android.os.Handler;
+import android.os.IBinder;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.View;
-import android.widget.Button;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
@@ -27,9 +24,8 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class RecordActivity extends Activity implements ServiceInterface {
 
     private static final String TAG = "MainActivity";
     private static final int PERMISSION_CODE = 1;
@@ -42,103 +38,28 @@ public class MainActivity extends AppCompatActivity {
     private MediaProjectionCallback mMediaProjectionCallback;
     private ToggleButton mToggleButton;
     private MediaRecorder mMediaRecorder;
+    private MyService myService;
+    private boolean bound = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+
         DisplayMetrics metrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
         mScreenDensity = metrics.densityDpi;
-
-        System.out.println("start test");
-
-        Button startBackService = (Button)findViewById(R.id.start);
-        startBackService.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                // Start android service.
-                Intent startServiceIntent = new Intent(MainActivity.this, MyService.class);
-                startService(startServiceIntent);
-                finish();
-            }
-        });
-
-        Button stopBackService = (Button)findViewById(R.id.stop);
-        stopBackService.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                // Stop android service.
-                Intent stopServiceIntent = new Intent(MainActivity.this, MyService.class);
-                stopService(stopServiceIntent);
-            }
-        });
-
-
-        boolean granted = false;
-        AppOpsManager appOps = (AppOpsManager) this
-                .getSystemService(Context.APP_OPS_SERVICE);
-        int mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS,
-                android.os.Process.myUid(), this.getPackageName());
-
-        if (mode == AppOpsManager.MODE_DEFAULT) {
-            granted = (this.checkCallingOrSelfPermission(android.Manifest.permission.PACKAGE_USAGE_STATS) == PackageManager.PERMISSION_GRANTED);
-        } else {
-            granted = (mode == AppOpsManager.MODE_ALLOWED);
-        }
-        System.out.println("granted " +granted);
-        if(granted == false){
-            startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
+            getWindow().setStatusBarColor(getResources().getColor(android.R.color.transparent));
         }
 
+        System.out.println("start recorder activity test");
 
+        initRecorder();
+        prepareRecorder();
+        mProjectionManager = (MediaProjectionManager) getSystemService
+                (Context.MEDIA_PROJECTION_SERVICE);
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
-                != PackageManager.PERMISSION_GRANTED) {
-            System.out.println("no permission");
-
-            ActivityCompat.requestPermissions(this, new String[] { Manifest.permission.RECORD_AUDIO },
-                    10);
-
-        }
-        else if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED) {
-            System.out.println("no permission");
-
-            ActivityCompat.requestPermissions(this, new String[] { Manifest.permission.WRITE_EXTERNAL_STORAGE },
-                    10);
-
-        }else{
-            System.out.println("setup");
-
-            ActivityManager am = (ActivityManager) this.getSystemService(Context.ACTIVITY_SERVICE);
-            List< ActivityManager.RunningTaskInfo > taskInfo = am.getRunningTasks(1);
-
-            for(int i=0; i<taskInfo.size();i++){
-                String currentRunningActivityName = taskInfo.get(i).topActivity.getClassName();
-                System.out.println("running: "+currentRunningActivityName);
-
-            }
-
-
-
-            initRecorder();
-            prepareRecorder();
-            mProjectionManager = (MediaProjectionManager) getSystemService
-                    (Context.MEDIA_PROJECTION_SERVICE);
-
-/*            mToggleButton = (ToggleButton) findViewById(R.id.toggle);
-            mToggleButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    onToggleScreenShare(v);
-                }
-            });*/
-
-            mMediaProjectionCallback = new MediaProjectionCallback();
-
-        }
-
+        mMediaProjectionCallback = new MediaProjectionCallback();
 
 
     }
@@ -168,14 +89,17 @@ public class MainActivity extends AppCompatActivity {
         mMediaProjection.registerCallback(mMediaProjectionCallback, null);
         mVirtualDisplay = createVirtualDisplay();
         mMediaRecorder.start();
+
     }
 
-    public void startRecord(View view) {
+    public void startRecord() {
             shareScreen();
-       }
+        System.out.println("recording started");
+
+    }
 
 
-    public void stopRecord(View view) {
+    public void stopRecord() {
             mMediaRecorder.stop();
             mMediaRecorder.reset();
             System.out.println("recording stopped");
@@ -206,15 +130,15 @@ public class MainActivity extends AppCompatActivity {
                 mMediaRecorder.getSurface(), null /*Callbacks*/, null /*Handler*/);
     }
 
+
+
+
     private class MediaProjectionCallback extends MediaProjection.Callback {
         @Override
         public void onStop() {
-            if (mToggleButton.isChecked()) {
-                mToggleButton.setChecked(false);
                 mMediaRecorder.stop();
                 mMediaRecorder.reset();
                 Log.v(TAG, "Recording Stopped");
-            }
             mMediaProjection = null;
             stopScreenSharing();
             Log.i(TAG, "MediaProjection Stopped");
@@ -230,24 +154,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-/*
-    public String getFilePath2() {
-        File file = new File(this.getFilesDir(),"ParentScope");
-        if(!file.exists()){
-            file.mkdir();
-        }
-
-        String filePath;
-        if (success) {
-            String videoName = ("capture_" + getCurSysDate() + ".mp4");
-            filePath = directory + File.separator + videoName;
-        } else {
-            Toast.makeText(this, "Failed to create Recordings directory", Toast.LENGTH_SHORT).show();
-            return null;
-        }
-        return filePath;
-    }
-*/
 
     public String getFilePath() {
         final String directory = Environment.getExternalStorageDirectory() + File.separator + "ParentScope";
@@ -293,6 +199,72 @@ public class MainActivity extends AppCompatActivity {
             mMediaRecorder.setVideoSize(DISPLAY_WIDTH, DISPLAY_HEIGHT);
             mMediaRecorder.setOutputFile(getFilePath());
         }
+    }
+
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        System.out.println("start record");
+        startRecord();
+        final Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                System.out.println("stop record");
+
+            }
+        }, 3000);
+
+        System.out.println("RecordActivity trying to bind ");
+
+        // bind to Service
+        Intent intent = new Intent(this, MyService.class);
+        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        // Unbind from service
+        if (bound) {
+            myService.setCallbacks(null); // unregister
+            unbindService(serviceConnection);
+            bound = false;
+        }
+    }
+
+    /** Callbacks for service binding, passed to bindService() */
+    private ServiceConnection serviceConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            // cast the IBinder and get MyService instance
+            System.out.println("RecordActivity connected to service ");
+
+            MyService.LocalBinder binder = (MyService.LocalBinder) service;
+            myService = binder.getService();
+            bound = true;
+            myService.setCallbacks(RecordActivity.this); // register
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            System.out.println("RecordActivity disconnected from service ");
+
+            bound = false;
+        }
+    };
+
+    /* Defined by ServiceCallbacks interface */
+    @Override
+    public void start() {
+        startRecord();
+    }
+    @Override
+    public void stop() {
+        stopRecord();
     }
 
 
