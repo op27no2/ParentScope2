@@ -79,6 +79,8 @@ public class MyService extends Service {
 
     @Override
     public void onCreate() {
+        System.out.println("ParentScope service onCreate");
+
         Toast.makeText(this, "Invoke background service onCreate method.", Toast.LENGTH_LONG).show();
         super.onCreate();
     }
@@ -86,7 +88,7 @@ public class MyService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        System.out.println("service started");
+        System.out.println("ParentScope service started");
 
         MyApplication.getScreenshotPermission();
         mMediaProjection = MyApplication.mMediaProjection;

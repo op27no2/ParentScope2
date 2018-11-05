@@ -13,6 +13,9 @@
     <uses-permission
         android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+
+
 
     <application
         android:name="MyApplication"
@@ -34,19 +37,13 @@
             android:name=".RecordActivity"
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
             >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+
         </activity>
         <activity
             android:name=".AcquireScreenshotPermissionIntent"
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
             >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+
         </activity>
 
         <service
@@ -54,9 +51,15 @@
             android:enabled="true"
             android:exported="true"></service>
 
-        <receiver android:name=".BootBroadcastReceiver" >
+        <receiver android:name=".BootBroadcastReceiver" android:enabled="true" android:exported="true" >
             <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                    <category android:name="android.intent.category.DEFAULT"/>
+                    <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED"/>
+                    <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                    <action android:name="android.intent.action.USER_PRESENT"/>
+                    <action android:name="android.intent.action.QUICKBOOT_POWERON"/>
+                    <!--For HTC devices-->
+                    <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
             </intent-filter>
         </receiver>
 
