@@ -13,6 +13,7 @@ import android.app.usage.UsageStatsManager;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.MediaRecorder;
@@ -404,6 +405,13 @@ public class MyService extends Service {
         if (success) {
             String videoName = ("capture_" + getCurSysDate() + ".mp4");
             filePath = directory + File.separator + videoName;
+
+            SharedPreferences prefs = MyApplication.getAppContext().getSharedPreferences(
+                    "PREFS", Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putString("testfilename",filePath);
+            editor.commit();
+
         } else {
             Toast.makeText(this, "Failed to create Recordings directory", Toast.LENGTH_SHORT).show();
             return null;

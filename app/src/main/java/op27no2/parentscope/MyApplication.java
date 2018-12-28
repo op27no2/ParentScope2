@@ -1,10 +1,16 @@
 package op27no2.parentscope;
 
 import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.content.Intent;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
+import android.os.Handler;
+import android.util.Log;
+
+import java.util.Set;
 
 public class MyApplication extends android.app.Application {
 
@@ -13,11 +19,37 @@ public class MyApplication extends android.app.Application {
     public static MediaProjection mMediaProjection;
     public static Context context;
 
+    //btxfr code
+    private static String TAG = "BTPHOTO/MainApplication";
+    protected static BluetoothAdapter adapter;
+    protected static Set<BluetoothDevice> pairedDevices;
+    protected static Handler clientHandler;
+    protected static Handler serverHandler;
+    protected static zClientThread clientThread;
+    protected static zServerThread serverThread;
+    protected static zProgressData progressData = new zProgressData();
+
+    protected static final String TEMP_IMAGE_FILE_NAME = "btimage.jpg";
+    protected static final int PICTURE_RESULT_CODE = 1234;
+    protected static final int IMAGE_QUALITY = 100;
 
     public void onCreate() {
         super.onCreate();
         System.out.println("APPLICATION ONCREATE");
         MyApplication.context = getApplicationContext();
+
+
+        //btxfr
+        adapter = BluetoothAdapter.getDefaultAdapter();
+        if (adapter != null) {
+            if (adapter.isEnabled()) {
+                pairedDevices = adapter.getBondedDevices();
+            } else {
+                Log.e(TAG, "Bluetooth is not enabled");
+            }
+        } else {
+            Log.e(TAG, "Bluetooth is not supported on this device");
+        }
     }
 
     public static Context getAppContext() {

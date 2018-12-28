@@ -2,13 +2,10 @@
 package op27no2.parentscope;
 
 import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
-import android.app.ActionBar;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -218,13 +215,16 @@ import android.widget.Toast;
 		// Check that there's actually something to send
 		if (message.length() > 0) {
 			// Get the message bytes and tell the BluetoothChatService to write
-			byte[] send = message.getBytes();
+			byte[] stringbytes = message.getBytes();
 
 
-			mChatService.write(send);
+			mChatService.write(stringbytes);
 
 			// Reset out string buffer to zero and clear the edit text field
 			mOutStringBuffer.setLength(0);
+
+
+
 			mOutEditText.setText(mOutStringBuffer);
 		}
 	}

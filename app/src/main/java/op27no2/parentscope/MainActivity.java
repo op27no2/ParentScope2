@@ -3,7 +3,6 @@ package op27no2.parentscope;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
-import android.app.ActionBar;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AppOpsManager;
@@ -77,6 +76,11 @@ public class MainActivity extends AppCompatActivity {
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
         mScreenDensity = metrics.densityDpi;
 
+        mConversationArrayAdapter = new ArrayAdapter<String>(this, R.layout.message);
+
+
+
+
         System.out.println("start test");
 
         Button startBackService = (Button)findViewById(R.id.start);
@@ -124,7 +128,16 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(btintent);
             }
         });
-
+        Button bt = (Button)findViewById(R.id.btxfr);
+        bt.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // Launch the DeviceListActivity to see devices and do scan
+                Intent btintent = null;
+                btintent = new Intent(MainActivity.this, zMainActivity.class);
+                startActivity(btintent);
+            }
+        });
 
         boolean granted = false;
         AppOpsManager appOps = (AppOpsManager) this

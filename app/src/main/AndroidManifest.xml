@@ -37,7 +37,12 @@
             android:name=".RecordActivity"
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
             >
+        </activity>
 
+        <activity
+            android:name=".zMainActivity"
+
+            >
         </activity>
         <activity
             android:name=".AcquireScreenshotPermissionIntent"
@@ -45,7 +50,12 @@
             >
 
         </activity>
+        <activity
+            android:name=".BriefActivity"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            >
 
+        </activity>
         <activity android:name=".DeviceListActivity"
             android:label="@string/select_device"
             android:theme="@android:style/Theme.Dialog"

@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -14,6 +15,7 @@ import android.util.Log;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Method;
 import java.util.UUID;
 
 
@@ -34,7 +36,9 @@ public class BluetoothChatService {
 
 	// Unique UUID for this application
 	private static final UUID MY_UUID = UUID
-			.fromString("0001101-0000-1000-8000-00805F9B34FB");
+			.fromString("fa87c0d0-afac-11de-8a39-0800200c9a66");
+			//.fromString("e0c5da29-7b15-44ac-b394-cf0181421826");
+		//	.fromString("0001101-0000-1000-8000-00805F9B34FB");
 
 	// INSECURE "8ce255c0-200a-11e0-ac64-0800200c9a66"
 	// SECURE "fa87c0d0-afac-11de-8a39-0800200c9a66"
@@ -302,8 +306,7 @@ public class BluetoothChatService {
 	private class AcceptThread extends Thread {
 		// The local server socket
 		private final BluetoothServerSocket mmServerSocket;
-		private String mSocketType;
-
+		private String mSocketType = "acceptthread";
 		public AcceptThread() {
 			BluetoothServerSocket tmp = null;
 
@@ -388,7 +391,7 @@ public class BluetoothChatService {
 	private class ConnectThread extends Thread {
 		private final BluetoothSocket mmSocket;
 		private final BluetoothDevice mmDevice;
-		private String mSocketType;
+		private String mSocketType = "connectthread";
 
 		public ConnectThread(BluetoothDevice device) {
 			mmDevice = device;
@@ -397,7 +400,7 @@ public class BluetoothChatService {
 			// Get a BluetoothSocket for a connection with the
 			// given BluetoothDevice
 			try {
-				tmp = device.createRfcommSocketToServiceRecord(MY_UUID);
+				tmp = createBluetoothSocket(mmDevice);
 			} catch (IOException e) {
 				Log.e(TAG, "Socket Type: " + mSocketType + "create() failed", e);
 			}
@@ -418,6 +421,8 @@ public class BluetoothChatService {
 				mmSocket.connect();
 			} catch (IOException e) {
 				// Close the socket
+
+
 				try {
 					mmSocket.close();
 				} catch (IOException e2) {
@@ -512,6 +517,32 @@ public class BluetoothChatService {
 			try {
 				mmOutStream.write(buffer);
 
+	/*			SharedPreferences prefs = MyApplication.getAppContext().getSharedPreferences(
+						"PREFS", Context.MODE_PRIVATE);
+				SharedPreferences.Editor editor = prefs.edit();
+				String filename = prefs.getString("testfilename","");
+				Uri uri = Uri.parse("file://"+filename);
+
+				BufferedInputStream bis = null;
+				try {
+					bis = new BufferedInputStream(MyApplication.getAppContext().getContentResolver().openInputStream(uri));
+					//OutputStream os = bs.getOutputStream();
+
+					int bufferSize = 1024;
+					byte[] buffer2 = new byte[bufferSize];
+
+					// we need to know how may bytes were read to write them to the byteBuffer
+					int len = 0;
+					while ((len = bis.read(buffer2)) != -1) {
+						mmOutStream.write(buffer2, 0, len);
+					}
+
+				} finally {
+					if (bis != null)
+						bis.close();
+				}*/
+
+
 				// Share the sent message back to the UI Activity
 				mHandler.obtainMessage(BluetoothChat.MESSAGE_WRITE, -1, -1,
 						buffer).sendToTarget();
@@ -527,6 +558,21 @@ public class BluetoothChatService {
 				Log.e(TAG, "close() of connect socket failed", e);
 			}
 		}
+	}
+
+
+
+	private BluetoothSocket createBluetoothSocket(BluetoothDevice device)
+			throws IOException {
+		if(Build.VERSION.SDK_INT >= 10){
+			try {
+				final Method m = device.getClass().getMethod("createInsecureRfcommSocketToServiceRecord", new Class[] { UUID.class });
+				return (BluetoothSocket) m.invoke(device, MY_UUID);
+			} catch (Exception e) {
+				Log.e(TAG, "Could not create Insecure RFComm Connection",e);
+			}
+		}
+		return  device.createRfcommSocketToServiceRecord(MY_UUID);
 	}
 }
 

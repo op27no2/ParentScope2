@@ -45,4 +45,15 @@
 
 
 
+    <Button
+        android:id="@+id/btxfr"
+        android:layout_below="@+id/bluetooth"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="5dp"
+        android:text="btxfr Activity"/>
+
+
+
 </RelativeLayout>

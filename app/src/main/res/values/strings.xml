@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">ParentScope</string>
+    <string name="app_name">Scoped</string>
     <!--  BluetoothChat -->
     <string name="send">Send</string>
     <string name="not_connected">You are not connected to a device</string>
