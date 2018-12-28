@@ -1,4 +1,4 @@
-/*
+
 package op27no2.parentscope;
 
 import android.annotation.SuppressLint;
@@ -12,6 +12,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -27,12 +28,12 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-*/
+
 /**
  * This is the main Activity that displays the current chat session.
- *//*
+ */
 
-@SuppressLint("NewApi") public class BluetoothChat extends Activity {
+@SuppressLint("NewApi") public class BluetoothChat extends AppCompatActivity {
 	// Debugging
 	private static final String TAG = "BluetoothChat";
 	private static final boolean D = true;
@@ -75,8 +76,9 @@ import android.widget.Toast;
 			Log.e(TAG, "+++ ON CREATE +++");
 
 		// Set up the window layout
-		//setContentView(R.layout.main);
-       setContentView(R.layout.main);
+		setContentView(R.layout.main);
+
+
 		// Get local Bluetooth adapter
 		mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
@@ -131,6 +133,7 @@ import android.widget.Toast;
 	private void setupChat() {
 		Log.d(TAG, "setupChat()");
 
+
 		// Initialize the array adapter for the conversation thread
 		mConversationArrayAdapter = new ArrayAdapter<String>(this,R.layout.message);
 		mConversationView = (ListView) findViewById(R.id.in);
@@ -145,11 +148,13 @@ import android.widget.Toast;
 		mSendButton.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 				// Send a message using content of the edit text widget
+
 				TextView view = (TextView) findViewById(R.id.edit_text_out);
 				String message = view.getText().toString();
 				sendMessage(message);
 			}
 		});
+
 
 		// Initialize the BluetoothChatService to perform bluetooth connections
 		mChatService = new BluetoothChatService(this, mHandler);
@@ -194,13 +199,13 @@ import android.widget.Toast;
 		}
 	}
 
-	*/
+
 /**
 	 * Sends a message.
 	 * 
 	 * @param message
 	 *            A string of text to send.
-	 *//*
+	 */
 
 	private void sendMessage(String message) {
 		// Check that we're actually connected before trying anything
@@ -214,6 +219,8 @@ import android.widget.Toast;
 		if (message.length() > 0) {
 			// Get the message bytes and tell the BluetoothChatService to write
 			byte[] send = message.getBytes();
+
+
 			mChatService.write(send);
 
 			// Reset out string buffer to zero and clear the edit text field
@@ -239,18 +246,16 @@ import android.widget.Toast;
 		}
 	};
 
-	@SuppressLint("NewApi") private final void setStatus(int resId) {
-		final ActionBar actionBar = getActionBar();
-		actionBar.setSubtitle(resId);
-	}
 
-	@TargetApi(Build.VERSION_CODES.HONEYCOMB) private final void setStatus(CharSequence subTitle) {
-		final ActionBar actionBar = getActionBar();
-		actionBar.setSubtitle(subTitle);
+	private final void setStatus(CharSequence subTitle) {
+		TextView mText = findViewById(R.id.main_text);
+		mText.setText(subTitle);
 	}
 
 	// The Handler that gets information back from the BluetoothChatService
+	@SuppressLint("HandlerLeak")
 	private final Handler mHandler = new Handler() {
+		@SuppressLint("StringFormatInvalid")
 		@Override
 		public void handleMessage(Message msg) {
 			switch (msg.what) {
@@ -267,7 +272,7 @@ import android.widget.Toast;
 					break;
 				case BluetoothChatService.STATE_LISTEN:
 				case BluetoothChatService.STATE_NONE:
-					setStatus(R.string.title_not_connected);
+					setStatus(getResources().getString(R.string.title_not_connected));
 					break;
 				}
 				break;
@@ -346,7 +351,7 @@ import android.widget.Toast;
 	public boolean onOptionsItemSelected(MenuItem item) {
 		Intent serverIntent = null;
 		switch (item.getItemId()) {
-		case R.id.connect_scan:
+		case R.id.scan:
 			// Launch the DeviceListActivity to see devices and do scan
 			serverIntent = new Intent(this, DeviceListActivity.class);
 			startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
@@ -360,4 +365,4 @@ import android.widget.Toast;
 	}
 
 }
-*/
+

@@ -14,7 +14,7 @@
         android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
-
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 
 
     <application
@@ -46,11 +46,31 @@
 
         </activity>
 
+        <activity android:name=".DeviceListActivity"
+            android:label="@string/select_device"
+            android:theme="@android:style/Theme.Dialog"
+            android:configChanges="orientation|keyboardHidden"/>
+
+        <activity android:name=".BluetoothChat"
+            android:label="btchat"
+
+            />
+
         <service
             android:name=".MyService"
             android:enabled="true"
+            android:stopWithTask="false"
             android:exported="true"></service>
 
+        <receiver
+            android:name=".RestarterBroadcastReceiver"
+            android:enabled="true"
+            android:exported="true"
+            android:label="RestartServiceWhenStopped">
+            <intent-filter>
+                <action android:name="com.parentscope.ReceiverDem" />
+            </intent-filter>
+        </receiver>
         <receiver android:name=".BootBroadcastReceiver" android:enabled="true" android:exported="true" >
             <intent-filter>
                     <category android:name="android.intent.category.DEFAULT"/>

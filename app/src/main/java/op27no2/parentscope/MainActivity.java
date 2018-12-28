@@ -1,6 +1,10 @@
 package op27no2.parentscope;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
+import android.app.ActionBar;
+import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AppOpsManager;
 import android.bluetooth.BluetoothAdapter;
@@ -13,14 +17,18 @@ import android.hardware.display.VirtualDisplay;
 import android.media.MediaRecorder;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Toast;
 import android.widget.ToggleButton;
@@ -45,6 +53,21 @@ public class MainActivity extends AppCompatActivity {
     private MediaProjectionCallback mMediaProjectionCallback;
     private ToggleButton mToggleButton;
     private MediaRecorder mMediaRecorder;
+    private static final int REQUEST_CONNECT_DEVICE = 2;
+
+    // Message types sent from the BluetoothChatService Handler
+    public static final int MESSAGE_STATE_CHANGE = 1;
+    public static final int MESSAGE_READ = 2;
+    public static final int MESSAGE_WRITE = 3;
+    public static final int MESSAGE_DEVICE_NAME = 4;
+    public static final int MESSAGE_TOAST = 5;
+
+    private ArrayAdapter<String> mConversationArrayAdapter;
+    private String mConnectedDeviceName = null;
+    public static final String DEVICE_NAME = "device_name";
+    public static final String TOAST = "toast";
+
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -72,8 +95,33 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 // Stop android service.
-                Intent stopServiceIntent = new Intent(MainActivity.this, MyService.class);
-                stopService(stopServiceIntent);
+            /*    Intent stopServiceIntent = new Intent(MainActivity.this, MyService.class);
+                stopService(stopServiceIntent);*/
+
+                Intent closeIntent = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
+                sendBroadcast(closeIntent);
+            }
+        });
+
+        Button connectBT = (Button)findViewById(R.id.connect);
+        connectBT.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // Launch the DeviceListActivity to see devices and do scan
+                Intent serverIntent = null;
+                serverIntent = new Intent(MainActivity.this, DeviceListActivity.class);
+                startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
+            }
+        });
+
+        Button bluetooth = (Button)findViewById(R.id.bluetooth);
+        bluetooth.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // Launch the DeviceListActivity to see devices and do scan
+                Intent btintent = null;
+                btintent = new Intent(MainActivity.this, BluetoothChat.class);
+                startActivity(btintent);
             }
         });
 
@@ -157,8 +205,17 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_CONNECT_DEVICE) {
+            // When DeviceListActivity returns with a device to connect
+            if (resultCode == Activity.RESULT_OK) {
+                connectDevice(data);
+            }
+        }
+        if (resultCode == Activity.RESULT_OK) {
+            connectDevice(data);
+        }
         if (requestCode != PERMISSION_CODE) {
-            Log.e(TAG, "Unknown request code: " + requestCode);
+            System.out.println("not permission request code");
             return;
         }
         if (resultCode != RESULT_OK) {
@@ -320,9 +377,89 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-
-
     }
 
+    private void connectDevice(Intent data) {
+        BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
+        // Get the device MAC address
+        String address = data.getExtras().getString(
+                DeviceListActivity.EXTRA_DEVICE_ADDRESS);
+        // Get the BluetoothDevice object
+        BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
+        // Attempt to connect to the device
+        BluetoothChatService mChatService = new BluetoothChatService(this, mHandler);
+        mChatService.start();
+        mChatService.connect(device);
+    }
+
+
+
+    // The Handler that gets information back from the BluetoothChatService
+    @SuppressLint("HandlerLeak")
+    private final Handler mHandler = new Handler() {
+        @SuppressLint("StringFormatInvalid")
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case MESSAGE_STATE_CHANGE:
+
+                    switch (msg.arg1) {
+                        case BluetoothChatService.STATE_CONNECTED:
+                            setStatus(getString(R.string.title_connected_to,mConnectedDeviceName));
+                            mConversationArrayAdapter.clear();
+                            break;
+                        case BluetoothChatService.STATE_CONNECTING:
+                            setStatus(getResources().getString(R.string.title_connecting));
+                            break;
+                        case BluetoothChatService.STATE_LISTEN:
+                        case BluetoothChatService.STATE_NONE:
+                            setStatus(R.string.title_not_connected);
+                            break;
+                    }
+                    break;
+                case MESSAGE_WRITE:
+                    byte[] writeBuf = (byte[]) msg.obj;
+                    // construct a string from the buffer
+                    String writeMessage = new String(writeBuf);
+                    mConversationArrayAdapter.add("Me:  " + writeMessage);
+                    break;
+                case MESSAGE_READ:
+                    byte[] readBuf = (byte[]) msg.obj;
+                    // construct a string from the valid bytes in the buffer
+                    String readMessage = new String(readBuf, 0, msg.arg1);
+                    mConversationArrayAdapter.add(mConnectedDeviceName + ":  "
+                            + readMessage);
+                    break;
+                case MESSAGE_DEVICE_NAME:
+                    // save the connected device's name
+                    mConnectedDeviceName = msg.getData().getString(DEVICE_NAME);
+                    Toast.makeText(getApplicationContext(),
+                            "Connected to " + mConnectedDeviceName,
+                            Toast.LENGTH_SHORT).show();
+                    break;
+                case MESSAGE_TOAST:
+                    Toast.makeText(getApplicationContext(),
+                            msg.getData().getString(TOAST), Toast.LENGTH_SHORT)
+                            .show();
+                    break;
+            }
+        }
+    };
+
+
+
+
+
+
+    @SuppressLint("NewApi") private final void setStatus(int resId) {
+      //  final ActionBar actionBar = getActionBar();
+       // actionBar.setSubtitle(resId);
+    }
+
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB) private final void setStatus(CharSequence subTitle) {
+      //  final ActionBar actionBar = getActionBar();
+//        actionBar.setSubtitle(subTitle);
+    }
 
 }

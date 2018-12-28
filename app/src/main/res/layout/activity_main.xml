@@ -25,5 +25,24 @@
         android:layout_marginTop="5dp"
         android:text="Stop"/>
 
+    <Button
+        android:id="@+id/connect"
+        android:layout_below="@+id/stop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="5dp"
+        android:text="Connect"/>
+
+    <Button
+        android:id="@+id/bluetooth"
+        android:layout_below="@+id/connect"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="5dp"
+        android:text="Bluetooth Activity"/>
+
+
 
 </RelativeLayout>

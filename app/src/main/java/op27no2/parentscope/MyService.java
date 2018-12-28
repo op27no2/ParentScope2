@@ -3,10 +3,14 @@ package op27no2.parentscope;
 import android.annotation.SuppressLint;
 import android.app.ActivityManager;
 import android.app.AlarmManager;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
+import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
 import android.hardware.display.DisplayManager;
@@ -15,10 +19,13 @@ import android.media.MediaRecorder;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
 import android.os.Binder;
+import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.os.SystemClock;
+import android.support.v4.app.NotificationCompat;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.WindowManager;
@@ -34,7 +41,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 public class MyService extends Service {
-    Handler mHandler;
+    Handler mHandler2;
     Runnable mRunnable;
     private MediaRecorder mMediaRecorder;
     private VirtualDisplay mVirtualDisplay;
@@ -48,13 +55,23 @@ public class MyService extends Service {
     private MyService.MediaProjectionCallback mMediaProjectionCallback;
     private ToggleButton mToggleButton;
     private MyService myService;
+    private BluetoothChatService mChatService = null;
 
+    // Message types sent from the BluetoothChatService Handler
+    public static final int MESSAGE_STATE_CHANGE = 1;
+    public static final int MESSAGE_READ = 2;
+    public static final int MESSAGE_WRITE = 3;
+    public static final int MESSAGE_DEVICE_NAME = 4;
+    public static final int MESSAGE_TOAST = 5;
+
+    public static final String DEVICE_NAME = "device_name";
 
     // Binder given to clients
     private final IBinder binder = new LocalBinder();
     // Registered callbacks
     private ServiceInterface serviceCallbacks;
     private Boolean isRecording = false;
+    private String mConnectedDeviceName = null;
 
 
     public MyService() {
@@ -80,8 +97,52 @@ public class MyService extends Service {
     @Override
     public void onCreate() {
         System.out.println("ParentScope service onCreate");
+        if (Build.VERSION.SDK_INT >= 26) {
+            String CHANNEL_ID = "my_channel_01";
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
+                    "Channel human readable title",
+                    NotificationManager.IMPORTANCE_DEFAULT);
 
-        Toast.makeText(this, "Invoke background service onCreate method.", Toast.LENGTH_LONG).show();
+            ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).createNotificationChannel(channel);
+
+
+            Intent showTaskIntent = new Intent(getApplicationContext(), BriefActivity.class);
+            showTaskIntent.setAction(Intent.ACTION_MAIN);
+            showTaskIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+            showTaskIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+            PendingIntent contentIntent = PendingIntent.getActivity(
+                    getApplicationContext(),
+                    0,
+                    showTaskIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT);
+
+            Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                    .setContentTitle(getString(R.string.app_name))
+                    .setContentText("Currently Active")
+                    .setSmallIcon(R.drawable.ic_launcher_background)
+                    .setWhen(System.currentTimeMillis())
+                    .setContentIntent(contentIntent)
+                    .build();
+
+
+            startForeground(1, notification);
+
+            final Handler handler = new Handler();
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+
+
+                    System.out.println("TRY TO CANCEL NOTIFICATIONS");
+
+                }
+            }, 10000);
+
+
+        }
+
+        Toast.makeText(this, "Service onCreate method.", Toast.LENGTH_LONG).show();
         super.onCreate();
     }
 
@@ -89,6 +150,8 @@ public class MyService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         System.out.println("ParentScope service started");
+        Toast.makeText(this, "ParentScope Started", Toast.LENGTH_SHORT).show();
+
 
         MyApplication.getScreenshotPermission();
         mMediaProjection = MyApplication.mMediaProjection;
@@ -101,29 +164,42 @@ public class MyService extends Service {
         window.getDefaultDisplay().getMetrics(metrics);
         mScreenDensity = metrics.densityDpi;
 
+        mChatService = new BluetoothChatService(this, mHandler);
+        mChatService.start();
 
 
-
-        mHandler = new Handler();
+        mHandler2 = new Handler();
         mRunnable = new Runnable() {
             @Override
             public void run() {
 
+                BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
-                System.out.println("Foreground Task: "+printForegroundTask());
+        /*        if (mBluetoothAdapter.getScanMode() != BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE) {
+                    Intent discoverableIntent = new Intent(
+                            BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+                    discoverableIntent.putExtra(
+                            BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300);
+                    discoverableIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+                    startActivity(discoverableIntent);
+                }*/
+
+                System.out.println("ParentScope Foreground Task: "+printForegroundTask());
 
 
-                mHandler.postDelayed(mRunnable, 2000); //100 ms you should do it 4000
+                mHandler2.postDelayed(mRunnable, 2000); //100 ms you should do it 4000
             }
         };
 
-        mHandler.postDelayed(mRunnable, 0);
+        mHandler2.postDelayed(mRunnable, 0);
 
 
 
 
 
-        return super.onStartCommand(intent, flags, startId);
+        //return super.onStartCommand(intent, flags, startId);
+        return START_STICKY;
 
 
     }
@@ -196,31 +272,62 @@ public class MyService extends Service {
 
     @Override
     public void onDestroy() {
-        super.onDestroy();
-        System.out.println("service destroyed");
+        System.out.println("ParentScope service destroyed");
+        Toast.makeText(this, "ParentScope destroyed", Toast.LENGTH_SHORT).show();
 
-        if(mHandler != null && mRunnable != null) {
-            mHandler.removeCallbacks(mRunnable);
-        }
-
-
-    }
-
-    @Override
-    public void onTaskRemoved(Intent rootIntent) {
-        // TODO Auto-generated method stub
+     /*   Intent intent = new Intent("restartApps");
+        sendBroadcast(intent);
+*/
         Intent restartService = new Intent(getApplicationContext(),
                 this.getClass());
+
         restartService.setPackage(getPackageName());
+
         PendingIntent restartServicePI = PendingIntent.getService(
                 getApplicationContext(), 1, restartService,
                 PendingIntent.FLAG_ONE_SHOT);
 
         //Restart the service once it has been killed android
 
+        AlarmManager alarmService = (AlarmManager)getApplicationContext().getSystemService(Context.ALARM_SERVICE);
+        alarmService.set(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime() +1000, restartServicePI);
+
+
+        if(mHandler2 != null && mRunnable != null) {
+            mHandler2.removeCallbacks(mRunnable);
+        }
+
+/*
+        AlarmManager alarmMgr = (AlarmManager)this.getSystemService(this.ALARM_SERVICE);
+        Intent i = new Intent(this, MyService.class);
+        PendingIntent pendingIntent = PendingIntent.getService(this, 0, i, 0);
+        alarmMgr.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + 10, pendingIntent);
+
+
+        Intent broadcastIntent = new Intent("com.parentscope.ReceiverDem");
+        sendBroadcast(broadcastIntent);*/
+
+        super.onDestroy();
+
+    }
+
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        System.out.println("ParentScope Task Removed");
+        // TODO Auto-generated method stub
+        Intent restartService = new Intent(getApplicationContext(),
+                this.getClass());
+
+        restartService.setPackage(getPackageName());
+
+        PendingIntent restartServicePI = PendingIntent.getService(
+                getApplicationContext(), 1, restartService,
+                PendingIntent.FLAG_ONE_SHOT);
+
+        //Restart the service once it has been killed android
 
         AlarmManager alarmService = (AlarmManager)getApplicationContext().getSystemService(Context.ALARM_SERVICE);
-        alarmService.set(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime() +100, restartServicePI);
+        alarmService.set(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime() +1000, restartServicePI);
 
     }
 
@@ -301,6 +408,7 @@ public class MyService extends Service {
             Toast.makeText(this, "Failed to create Recordings directory", Toast.LENGTH_SHORT).show();
             return null;
         }
+
         return filePath;
     }
 
@@ -329,6 +437,62 @@ public class MyService extends Service {
     }
 
 
+    // The Handler that gets information back from the BluetoothChatService
+    @SuppressLint("HandlerLeak")
+    private final Handler mHandler = new Handler() {
+        @SuppressLint("StringFormatInvalid")
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case MESSAGE_STATE_CHANGE:
+                    switch (msg.arg1) {
+                        case BluetoothChatService.STATE_CONNECTED:
+                            Toast.makeText(getApplicationContext(),
+                                    mConnectedDeviceName, Toast.LENGTH_SHORT)
+                                    .show();
+                      //      mConversationArrayAdapter.clear();
+                            break;
+                        case BluetoothChatService.STATE_CONNECTING:
+                            Toast.makeText(getApplicationContext(),
+                                    getResources().getString(R.string.title_connecting), Toast.LENGTH_SHORT)
+                                    .show();
+                            break;
+                        case BluetoothChatService.STATE_LISTEN:
+                        case BluetoothChatService.STATE_NONE:
+                            Toast.makeText(getApplicationContext(),
+                                    getResources().getString(R.string.title_not_connected), Toast.LENGTH_SHORT)
+                                    .show();
+                            break;
+                    }
+                    break;
+                case MESSAGE_WRITE:
+                    byte[] writeBuf = (byte[]) msg.obj;
+                    // construct a string from the buffer
+                    String writeMessage = new String(writeBuf);
+                    //mConversationArrayAdapter.add("Me:  " + writeMessage);
+                    break;
+                case MESSAGE_READ:
+                    byte[] readBuf = (byte[]) msg.obj;
+                    // construct a string from the valid bytes in the buffer
+                    String readMessage = new String(readBuf, 0, msg.arg1);
+              //      mConversationArrayAdapter.add(mConnectedDeviceName + ":  "
+              //              + readMessage);
+                    break;
+                case MESSAGE_DEVICE_NAME:
+                    // save the connected device's name
+                    mConnectedDeviceName = msg.getData().getString(DEVICE_NAME);
+                    Toast.makeText(getApplicationContext(),
+                            "Connected to " + mConnectedDeviceName,
+                            Toast.LENGTH_SHORT).show();
+                    break;
+                case MESSAGE_TOAST:
+                    Toast.makeText(getApplicationContext(),
+                            "toasting", Toast.LENGTH_SHORT)
+                            .show();
+                    break;
+            }
+        }
+    };
 
 
 
