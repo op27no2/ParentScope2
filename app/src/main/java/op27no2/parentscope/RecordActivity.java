@@ -88,6 +88,7 @@ public class RecordActivity extends Activity implements ServiceInterface {
         mMediaProjection = mProjectionManager.getMediaProjection(resultCode, data);
         mMediaProjection.registerCallback(mMediaProjectionCallback, null);
         mVirtualDisplay = createVirtualDisplay();
+        //TODO TURN THIS BACK ON
         mMediaRecorder.start();
 
     }

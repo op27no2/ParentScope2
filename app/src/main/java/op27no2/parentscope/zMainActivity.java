@@ -1,9 +1,12 @@
 package op27no2.parentscope;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothDevice;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -23,18 +26,26 @@ import android.widget.Toast;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 public class zMainActivity extends Activity {
     private static final String TAG = "BTPHOTO/MainActivity";
     private Spinner deviceSpinner;
     private ProgressDialog progressDialog;
 
+    @SuppressLint("HandlerLeak")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.zmain);
 
+        //THE SENDING DEVICE DEVICE
         MyApplication.clientHandler = new Handler() {
             @Override
             public void handleMessage(Message message) {
@@ -80,7 +91,7 @@ public class zMainActivity extends Activity {
             }
         };
 
-
+        //THE RECEIVING DEVICE
         MyApplication.serverHandler = new Handler() {
             @Override
             public void handleMessage(Message message) {
@@ -89,6 +100,16 @@ public class zMainActivity extends Activity {
                         if (progressDialog != null) {
                             progressDialog.dismiss();
                             progressDialog = null;
+                        }
+
+                        try (FileOutputStream stream = new FileOutputStream(getFilePath())) {
+                            stream.write(((byte[]) message.obj));
+                        } catch (FileNotFoundException e) {
+                            System.out.println("ERROR filenotfound "+e.getMessage());
+                            e.printStackTrace();
+                        } catch (IOException e) {
+                            System.out.println("IO ERROR "+e.getMessage());
+                            e.printStackTrace();
                         }
 
                         BitmapFactory.Options options = new BitmapFactory.Options();
@@ -200,9 +221,16 @@ public class zMainActivity extends Activity {
                     byte[] compressedImage = compressedImageStream.toByteArray();
                     Log.v(TAG, "Compressed image size: " + compressedImage.length);
 
+
+                    SharedPreferences prefs = MyApplication.getAppContext().getSharedPreferences(
+                            "PREFS", Context.MODE_PRIVATE);
+                    String videopath = prefs.getString("testfilepath","");
+                    System.out.println("filepath: "+videopath);
+                    byte[] myBytes = fullyReadFileToBytes(videopath);
+
                     // Invoke client thread to send
                     Message message = new Message();
-                    message.obj = compressedImage;
+                    message.obj = myBytes;
                     MyApplication.clientThread.incomingHandler.sendMessage(message);
 
                     // Display the image locally
@@ -233,4 +261,68 @@ public class zMainActivity extends Activity {
         String spinnerText;
         String value;
     }
+
+
+    byte[] fullyReadFileToBytes(String filepath) throws IOException {
+        File f = new File(filepath);
+        int size = (int) f.length();
+        byte bytes[] = new byte[size];
+        byte tmpBuff[] = new byte[size];
+        FileInputStream fis= new FileInputStream(f);;
+        try {
+
+            int read = fis.read(bytes, 0, size);
+            if (read < size) {
+                int remain = size - read;
+                while (remain > 0) {
+                    read = fis.read(tmpBuff, 0, remain);
+                    System.arraycopy(tmpBuff, 0, bytes, size - remain, read);
+                    remain -= read;
+                }
+            }
+        }  catch (IOException e){
+            throw e;
+        } finally {
+            fis.close();
+        }
+
+        return bytes;
+    }
+
+
+
+    public String getFilePath() {
+        final String directory = Environment.getExternalStorageDirectory() + File.separator + "ParentScope";
+        if (!Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
+            Toast.makeText(this, "Failed to get External Storage", Toast.LENGTH_SHORT).show();
+            return null;
+        }
+        final File folder = new File(directory);
+        boolean success = true;
+        if (!folder.exists()) {
+            success = folder.mkdir();
+        }
+        String filePath;
+        if (success) {
+            String videoName = ("capture_" + getCurSysDate() + ".mp4");
+            filePath = directory + File.separator + videoName;
+
+            SharedPreferences prefs = MyApplication.getAppContext().getSharedPreferences(
+                    "PREFS", Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putString("testfilepath",filePath);
+            editor.commit();
+            System.out.println("set file path: "+filePath);
+
+        } else {
+            Toast.makeText(this, "Failed to create Recordings directory", Toast.LENGTH_SHORT).show();
+            return null;
+        }
+
+        return filePath;
+    }
+    public String getCurSysDate() {
+        return new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date());
+    }
+
 }

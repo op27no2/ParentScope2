@@ -241,19 +241,20 @@ public class MyService extends Service {
             prepareRecorder();
             startRecord();
 
-          /*  Intent dialogIntent = new Intent(this, RecordActivity.class);
+            //don't think I need this to record
+  /*          Intent dialogIntent = new Intent(this, RecordActivity.class);
             dialogIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             dialogIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            startActivity(dialogIntent);*/
-
+            startActivity(dialogIntent);
+*/
             System.out.println("check callbacks");
 
-    /*        if (serviceCallbacks != null) {
+            //I think taking this out stops record function
+            if (serviceCallbacks != null) {
                 serviceCallbacks.start();
                 System.out.println("START RECORD");
-
             }
-*/
+
             final Handler handler = new Handler();
             handler.postDelayed(new Runnable() {
                 @Override
@@ -263,7 +264,6 @@ public class MyService extends Service {
 
                 }
             }, 6000);
-
 
         }
 
@@ -358,7 +358,7 @@ public class MyService extends Service {
             return;
         }
         mVirtualDisplay.release();
-        //mMediaRecorder.release();
+        mMediaRecorder.release();
     }
 
     private VirtualDisplay createVirtualDisplay() {
@@ -409,8 +409,9 @@ public class MyService extends Service {
             SharedPreferences prefs = MyApplication.getAppContext().getSharedPreferences(
                     "PREFS", Context.MODE_PRIVATE);
             SharedPreferences.Editor editor = prefs.edit();
-            editor.putString("testfilename",filePath);
+            editor.putString("testfilepath",filePath);
             editor.commit();
+            System.out.println("set file path: "+filePath);
 
         } else {
             Toast.makeText(this, "Failed to create Recordings directory", Toast.LENGTH_SHORT).show();
