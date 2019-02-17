@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".MonitoredActivity">
 
 
 
@@ -14,6 +14,7 @@
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="5dp"
+        style="@style/Widget.AppCompat.Button.Colored"
         android:text="Start"/>
 
     <Button
@@ -23,35 +24,18 @@
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="5dp"
+        style="@style/Widget.AppCompat.Button.Colored"
         android:text="Stop"/>
 
+
     <Button
-        android:id="@+id/connect"
+        android:id="@+id/btxfr"
         android:layout_below="@+id/stop"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="5dp"
-        android:text="Connect"/>
-
-    <Button
-        android:id="@+id/bluetooth"
-        android:layout_below="@+id/connect"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="5dp"
-        android:text="Bluetooth Activity"/>
-
-
-
-    <Button
-        android:id="@+id/btxfr"
-        android:layout_below="@+id/bluetooth"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="5dp"
+        style="@style/Widget.AppCompat.Button.Colored"
         android:text="btxfr Activity"/>
 
 

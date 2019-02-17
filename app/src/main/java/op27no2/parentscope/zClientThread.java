@@ -1,7 +1,9 @@
 package op27no2.parentscope;
 
+import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -10,30 +12,43 @@ import android.util.Log;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Method;
 import java.util.UUID;
-
+//THE SENDING DEVICE
 public class zClientThread extends Thread {
     private final String TAG = "btxfr/ClientThread";
     private final BluetoothSocket socket;
     private final Handler handler;
+    private BluetoothDevice device;
     public Handler incomingHandler;
+    private String task;
+    private static UUID MY_UUID = UUID.fromString(zConstants.UUID_STRING);
 
-    public zClientThread(BluetoothDevice device, Handler handler) {
+
+    public zClientThread(BluetoothDevice device, Handler handler, String task) {
         BluetoothSocket tempSocket = null;
         this.handler = handler;
+        this.task = task;
+        this.device = device;
+
 
         try {
-            tempSocket = device.createRfcommSocketToServiceRecord(UUID.fromString(zConstants.UUID_STRING));
+            tempSocket = device.createRfcommSocketToServiceRecord(MY_UUID);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
         }
         this.socket = tempSocket;
+
     }
 
+    @SuppressLint("HandlerLeak")
     public void run() {
         try {
+
             Log.v(TAG, "Opening client socket");
+
             socket.connect();
+
             Log.v(TAG, "Connection established");
 
         } catch (IOException ioe) {
@@ -47,6 +62,8 @@ public class zClientThread extends Thread {
         }
 
         Looper.prepare();
+
+        System.out.println("CLIENT THREAD create handler");
 
         incomingHandler = new Handler(){
             @Override
@@ -107,6 +124,7 @@ public class zClientThread extends Thread {
 
                     } catch (Exception e) {
                         Log.e(TAG, e.toString());
+
                     }
 
                 }
@@ -114,16 +132,24 @@ public class zClientThread extends Thread {
         };
 
         handler.sendEmptyMessage(zMessageType.READY_FOR_DATA);
+        if(task.equals("request")){
+            handler.sendEmptyMessage(zMessageType.REQUEST);
+        }
         Looper.loop();
     }
 
     public void cancel() {
         try {
             if (socket.isConnected()) {
+                socket.getInputStream().close();
+                socket.getOutputStream().close();
                 socket.close();
             }
         } catch (Exception e) {
             Log.e(TAG, e.toString());
         }
     }
+
+
+
 }

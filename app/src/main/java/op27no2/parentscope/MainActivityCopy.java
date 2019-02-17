@@ -39,9 +39,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivityCopy extends AppCompatActivity {
 
-    private static final String TAG = "MainActivity";
+    private static final String TAG = "MonitoredActivity";
     private static final int PERMISSION_CODE = 1;
     private int mScreenDensity;
     private MediaProjectionManager mProjectionManager;
@@ -71,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.monitored_activity);
         DisplayMetrics metrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
         mScreenDensity = metrics.densityDpi;
@@ -88,7 +88,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 // Start android service.
-                Intent startServiceIntent = new Intent(MainActivity.this, MyService.class);
+                Intent startServiceIntent = new Intent(MainActivityCopy.this, MyService.class);
                 startService(startServiceIntent);
                 finish();
             }
@@ -99,42 +99,24 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 // Stop android service.
-            /*    Intent stopServiceIntent = new Intent(MainActivity.this, MyService.class);
+            /*    Intent stopServiceIntent = new Intent(MonitoredActivity.this, MyService.class);
                 stopService(stopServiceIntent);*/
 
                 Intent closeIntent = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
                 sendBroadcast(closeIntent);
+
+
+
             }
         });
 
-        Button connectBT = (Button)findViewById(R.id.connect);
-        connectBT.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                // Launch the DeviceListActivity to see devices and do scan
-                Intent serverIntent = null;
-                serverIntent = new Intent(MainActivity.this, DeviceListActivity.class);
-                startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
-            }
-        });
-
-        Button bluetooth = (Button)findViewById(R.id.bluetooth);
-        bluetooth.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                // Launch the DeviceListActivity to see devices and do scan
-                Intent btintent = null;
-                btintent = new Intent(MainActivity.this, BluetoothChat.class);
-                startActivity(btintent);
-            }
-        });
         Button bt = (Button)findViewById(R.id.btxfr);
         bt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 // Launch the DeviceListActivity to see devices and do scan
                 Intent btintent = null;
-                btintent = new Intent(MainActivity.this, zMainActivity.class);
+                btintent = new Intent(MainActivityCopy.this, AdminActivity.class);
                 startActivity(btintent);
             }
         });
@@ -146,7 +128,7 @@ public class MainActivity extends AppCompatActivity {
                 android.os.Process.myUid(), this.getPackageName());
 
         if (mode == AppOpsManager.MODE_DEFAULT) {
-            granted = (this.checkCallingOrSelfPermission(android.Manifest.permission.PACKAGE_USAGE_STATS) == PackageManager.PERMISSION_GRANTED);
+            granted = (this.checkCallingOrSelfPermission(Manifest.permission.PACKAGE_USAGE_STATS) == PackageManager.PERMISSION_GRANTED);
         } else {
             granted = (mode == AppOpsManager.MODE_ALLOWED);
         }
@@ -273,7 +255,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private VirtualDisplay createVirtualDisplay() {
-        return mMediaProjection.createVirtualDisplay("MainActivity",
+        return mMediaProjection.createVirtualDisplay("MonitoredActivity",
                 DISPLAY_WIDTH, DISPLAY_HEIGHT, mScreenDensity,
                 DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
                 mMediaRecorder.getSurface(), null /*Callbacks*/, null /*Handler*/);

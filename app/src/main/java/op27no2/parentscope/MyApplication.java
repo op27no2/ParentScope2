@@ -34,10 +34,11 @@ public class MyApplication extends android.app.Application {
     protected static final int IMAGE_QUALITY = 100;
 
     public void onCreate() {
+
         super.onCreate();
         System.out.println("APPLICATION ONCREATE");
         MyApplication.context = getApplicationContext();
-
+        instance = this;
 
         //btxfr
         adapter = BluetoothAdapter.getDefaultAdapter();
@@ -55,6 +56,11 @@ public class MyApplication extends android.app.Application {
     public static Context getAppContext() {
         return MyApplication.context;
     }
+
+    public static Handler getClientHandlert() {
+        return MyApplication.clientHandler;
+    }
+
 
     protected static void getScreenshotPermission() {
         try {
@@ -82,7 +88,7 @@ public class MyApplication extends android.app.Application {
 
         final Intent intent = new Intent(getAppContext() , AcquireScreenshotPermissionIntent.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        getAppContext() .startActivity(intent);
+        getAppContext().startActivity(intent);
     }
 
 

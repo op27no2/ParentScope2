@@ -27,7 +27,7 @@ import java.util.Date;
 
 public class RecordActivity extends Activity implements ServiceInterface {
 
-    private static final String TAG = "MainActivity";
+    private static final String TAG = "MonitoredActivity";
     private static final int PERMISSION_CODE = 1;
     private int mScreenDensity;
     private MediaProjectionManager mProjectionManager;
@@ -125,7 +125,7 @@ public class RecordActivity extends Activity implements ServiceInterface {
     }
 
     private VirtualDisplay createVirtualDisplay() {
-        return mMediaProjection.createVirtualDisplay("MainActivity",
+        return mMediaProjection.createVirtualDisplay("MonitoredActivity",
                 DISPLAY_WIDTH, DISPLAY_HEIGHT, mScreenDensity,
                 DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
                 mMediaRecorder.getSurface(), null /*Callbacks*/, null /*Handler*/);

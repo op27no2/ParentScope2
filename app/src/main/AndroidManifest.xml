@@ -26,7 +26,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity">
+        <activity android:name=".SelectActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -39,9 +39,20 @@
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
             >
         </activity>
-
         <activity
-            android:name=".zMainActivity"
+            android:name=".VideoActivity"
+            >
+        </activity>
+        <activity
+            android:name=".MonitoredActivity"
+            >
+        </activity>
+        <activity
+            android:name=".PasswordActivity"
+            >
+        </activity>
+        <activity
+            android:name=".AdminActivity"
 
             >
         </activity>

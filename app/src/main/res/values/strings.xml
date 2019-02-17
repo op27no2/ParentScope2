@@ -20,4 +20,12 @@
     <!-- Options Menu -->
     <string name="connect">Connect a device</string>
     <string name="discoverable">Make discoverable</string>
+
+    <!-- Options Menu -->
+    <string name="Instructions1"> Install Companion App to the device that you would like to monitor. Enable the permissions as requested during install. Be sure to give permission to the service to start capturing screen data. Be sure to pair the two devices to allow for future data transfer</string>
+    <string name="Instructions2"> It is best to obtain concurrence from the monitored user. Alternatively, you will need to enforce bluetooth pairing through disbling access to settings </string>
+    <string name="Instructions3"> Currently, Android does not allow any app to prevent the user from uninstalling it through safe mode. Scoped will alert you if it appears the companion app has not run in the last 24 hours. </string>
+    <string name="Instructions4"> Third party apps with root access may provide stricter installation control on the monitored phone. Alternatively, we recommend revoking device access unless the monitored user agrees to installation</string>
+
+
 </resources>

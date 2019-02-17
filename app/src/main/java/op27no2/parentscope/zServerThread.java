@@ -3,12 +3,14 @@ package op27no2.parentscope;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Handler;
 import android.util.Log;
 
 import java.io.IOException;
 import java.util.UUID;
-
+//THE RECEIVING DEVICE
 public class zServerThread extends Thread {
     private final String TAG = "ServerThread";
     private final BluetoothServerSocket serverSocket;
@@ -37,10 +39,16 @@ public class zServerThread extends Thread {
                 Log.v(TAG, "Opening new server socket");
                 socket = serverSocket.accept();
 
+                handler.sendEmptyMessage(zMessageType.RECEIVED_CONNECTION);
+
+
                 try {
                     Log.v(TAG, "Got connection from client.  Spawning new data transfer thread.");
-                    zDataTransferThread dataTransferThread = new zDataTransferThread(socket, handler);
-                    dataTransferThread.start();
+
+                        zDataTransferThread dataTransferThread = new zDataTransferThread(socket, handler);
+                        dataTransferThread.start();
+
+
                 } catch (Exception e) {
                     Log.e(TAG, e.toString());
                 }
