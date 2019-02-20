@@ -11,7 +11,6 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.os.Environment;
@@ -22,10 +21,10 @@ import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.Toast;
@@ -53,20 +52,30 @@ public class AdminActivity extends Activity {
     private ArrayList<String> fileNames = new ArrayList<String>();
     private ArrayList<String> filePaths = new ArrayList<String>();
     private ArrayList<File> fileArray = new ArrayList<File>();
+    private SharedPreferences prefs;
+    private SharedPreferences.Editor edt;
 
     @SuppressLint("HandlerLeak")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.admin_activity);
-
+        prefs = MyApplication.getAppContext().getSharedPreferences(
+                "PREFS", Context.MODE_PRIVATE);
+        edt = prefs.edit();
 
 
         final String directory = Environment.getExternalStorageDirectory() + File.separator + "ParentScope";
         File dir = new File(directory);
         File[] filelist = dir.listFiles();
-        Arrays.sort(filelist, Comparator.comparingLong(File::lastModified));
-        String[] theNamesOfFiles = new String[filelist.length];
+        if(filelist!=null) {
+            Arrays.sort(filelist, Comparator.comparingLong(File::lastModified));
+        }
+
+        String[] theNamesOfFiles = new String[0];
+        if(filelist!=null) {
+            theNamesOfFiles = new String[filelist.length];
+        }
         for (int i = 0; i < theNamesOfFiles.length; i++) {
             //   theNamesOfFiles[i] = filelist[i].getName();
             if(filelist[i].length()>0) {
@@ -332,6 +341,7 @@ public class AdminActivity extends Activity {
                 @Override
                 public void onClick(View view) {
                     System.out.println("sending pull request");
+                    if(prefs.getBoolean("show_bt_warning",true) == true)
                     showDialog();
                     }
             });
@@ -567,15 +577,33 @@ public class AdminActivity extends Activity {
         //alertDialog.getWindow().setLayout(600, 600); //Controlling width and height.
         alertDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.parseColor("#00000000")));
 
-        Button btnAdd2 = (Button) dialogView.findViewById(R.id.dialog_button);
+        Button btnAdd2 = (Button) dialogView.findViewById(R.id.dialog_button2);
+        Button btnAdd1 = (Button) dialogView.findViewById(R.id.dialog_button1);
+        CheckBox cb1 = (CheckBox) dialogView.findViewById(R.id.checkbox);
+
+        btnAdd1.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+
+                alertDialog.dismiss();
+                if(cb1.isChecked()){
+                    edt.putBoolean("show_bt_warning",false);
+                    edt.commit();
+                }
+            }
+        });
 
         btnAdd2.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
 
                 alertDialog.dismiss();
                 sendRequestMessage();
+                if(cb1.isChecked()){
+                    edt.putBoolean("show_bt_warning",false);
+                    edt.commit();
+                }
             }
         });
+
 
         if(!alertDialog.isShowing())
         {
