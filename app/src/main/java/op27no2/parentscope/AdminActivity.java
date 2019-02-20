@@ -2,6 +2,7 @@ package op27no2.parentscope;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
@@ -9,6 +10,9 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.Rect;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -16,7 +20,9 @@ import android.os.Message;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -55,13 +61,14 @@ public class AdminActivity extends Activity {
         setContentView(R.layout.admin_activity);
 
 
+
         final String directory = Environment.getExternalStorageDirectory() + File.separator + "ParentScope";
         File dir = new File(directory);
         File[] filelist = dir.listFiles();
         Arrays.sort(filelist, Comparator.comparingLong(File::lastModified));
         String[] theNamesOfFiles = new String[filelist.length];
         for (int i = 0; i < theNamesOfFiles.length; i++) {
-         //   theNamesOfFiles[i] = filelist[i].getName();
+            //   theNamesOfFiles[i] = filelist[i].getName();
             if(filelist[i].length()>0) {
                 fileNames.add(filelist[i].getName());
                 filePaths.add(filelist[i].getAbsolutePath());
@@ -325,9 +332,8 @@ public class AdminActivity extends Activity {
                 @Override
                 public void onClick(View view) {
                     System.out.println("sending pull request");
-
-                    sendRequestMessage();
-                }
+                    showDialog();
+                    }
             });
 
         } else {
@@ -551,5 +557,32 @@ public class AdminActivity extends Activity {
         }
     }
 
+
+    public void showDialog(){
+        LayoutInflater inflater = AdminActivity.this.getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_bt, null);
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(AdminActivity.this);
+        alertDialogBuilder.setView(dialogView);
+        AlertDialog alertDialog = alertDialogBuilder.create();
+        //alertDialog.getWindow().setLayout(600, 600); //Controlling width and height.
+        alertDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.parseColor("#00000000")));
+
+        Button btnAdd2 = (Button) dialogView.findViewById(R.id.dialog_button);
+
+        btnAdd2.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+
+                alertDialog.dismiss();
+                sendRequestMessage();
+            }
+        });
+
+        if(!alertDialog.isShowing())
+        {
+            alertDialog.show();
+        }
+
+
+    }
 
 }
