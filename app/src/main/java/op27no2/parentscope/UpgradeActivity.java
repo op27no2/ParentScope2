@@ -234,7 +234,7 @@ public class UpgradeActivity extends android.support.v4.app.Fragment implements 
         return prices;
     }
 
-
+//TODO acknowledge purchase within 3 days
     private void queryForProducts(final String productSku){
         System.out.println("query product method called");
 
