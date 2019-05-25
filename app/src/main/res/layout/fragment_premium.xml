@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:fancy="http://schemas.android.com/apk/res-auto"
+    android:tag="@string/tag_content"
+    android:background="#FFFFFF"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent">
+
+            <TextView
+                android:id="@+id/text1"
+                android:layout_marginTop="20dp"
+                android:layout_marginLeft="10dp"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:textColor="@color/colorPrimary"
+                android:textSize="26dp"
+                android:text="Upgrades:"/>
+
+    <View
+        android:id="@+id/separator"
+        android:layout_below="@+id/text1"
+        android:background="@color/colorPrimary"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
+        android:layout_width = "match_parent"
+        android:layout_height="1dp"/>
+
+
+<android.support.v7.widget.RecyclerView
+    android:id="@+id/purchase_recycler"
+    android:layout_below="@+id/separator"
+    android:scrollbars="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"/>
+
+
+
+</RelativeLayout>

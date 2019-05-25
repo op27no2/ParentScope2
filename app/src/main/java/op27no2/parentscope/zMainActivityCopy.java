@@ -35,7 +35,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 
-public class zMainActivityCopy extends Activity {
+public class zMainActivityCopy extends Activity implements ClickListener {
     private static final String TAG = "BTPHOTO/MonitoredActivity";
     private Spinner deviceSpinner;
     private ProgressDialog progressDialog;
@@ -46,7 +46,7 @@ public class zMainActivityCopy extends Activity {
 
     private ArrayList<String> fileNames = new ArrayList<String>();
     private ArrayList<String> filePaths = new ArrayList<String>();
-    private ArrayList<File> fileArray = new ArrayList<File>();
+    private ArrayList<FileObject> fileArray = new ArrayList<FileObject>();
 
     @SuppressLint("HandlerLeak")
     @Override
@@ -65,7 +65,8 @@ public class zMainActivityCopy extends Activity {
             if(filelist[i].length()>0) {
                 fileNames.add(filelist[i].getName());
                 filePaths.add(filelist[i].getAbsolutePath());
-                fileArray.add(filelist[i]);
+                FileObject mFile = new FileObject(filelist[i],0);
+                fileArray.add(mFile);
                 System.out.println("Files: " + filelist[i].getName());
             }
         }
@@ -88,7 +89,7 @@ public class zMainActivityCopy extends Activity {
         mRecyclerView.setLayoutManager(mLayoutManager);
 
         // specify an adapter (see also next example)
-        mAdapter = new MyAdapter(this,fileArray, filePaths);
+        mAdapter = new MyAdapter(this,fileArray, filePaths, this);
         mRecyclerView.setAdapter(mAdapter);
 
 
@@ -311,14 +312,14 @@ public class zMainActivityCopy extends Activity {
             });
 
 
-            Button clientButton = (Button) findViewById(R.id.clientButton);
+/*            Button clientButton = (Button) findViewById(R.id.clientButton);
             clientButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                             System.out.println("sending file");
                             sendFile();
                 }
-            });
+            });*/
 
             Button pullButton = (Button) findViewById(R.id.pullButton);
             pullButton.setOnClickListener(new View.OnClickListener() {
@@ -388,6 +389,11 @@ public class zMainActivityCopy extends Activity {
                 }*/
             }
         }
+    }
+
+    @Override
+    public void onLongClick(int position) {
+
     }
 
     class DeviceData {
@@ -487,7 +493,7 @@ public class zMainActivityCopy extends Activity {
                         System.out.println("canceled client thread");
                         MyApplication.clientThread.cancel();
                     }
-                    MyApplication.clientThread = new zClientThread(device, MyApplication.clientHandler, "photo");
+                    MyApplication.clientThread = new zClientThread(device, MyApplication.clientHandler, "photo", 0);
                     MyApplication.clientThread.start();
                 }
             }
@@ -537,7 +543,7 @@ public class zMainActivityCopy extends Activity {
                         System.out.println("canceled client thread");
                         MyApplication.clientThread.cancel();
                     }
-                    MyApplication.clientThread = new zClientThread(device, MyApplication.clientHandler, "request");
+                    MyApplication.clientThread = new zClientThread(device, MyApplication.clientHandler, "request",0);
                     MyApplication.clientThread.start();
 
 

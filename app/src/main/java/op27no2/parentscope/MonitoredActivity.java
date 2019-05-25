@@ -3,7 +3,6 @@ package op27no2.parentscope;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
-import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AppOpsManager;
 import android.bluetooth.BluetoothAdapter;
@@ -23,12 +22,16 @@ import android.os.Handler;
 import android.os.Message;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.Spinner;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
@@ -39,7 +42,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
-public class MonitoredActivity extends AppCompatActivity {
+import static android.app.Activity.RESULT_OK;
+
+public class MonitoredActivity extends Fragment {
 
     private static final String TAG = "MonitoredActivity";
     private static final int PERMISSION_CODE = 1;
@@ -66,44 +71,49 @@ public class MonitoredActivity extends AppCompatActivity {
     public static final String DEVICE_NAME = "device_name";
     public static final String TOAST = "toast";
 
+    private Spinner deviceSpinner;
+
+
 
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.monitored_activity);
+        View view = inflater.inflate(R.layout.monitored_activity, container, false);
+
         DisplayMetrics metrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(metrics);
+        getActivity().getWindowManager().getDefaultDisplay().getMetrics(metrics);
         mScreenDensity = metrics.densityDpi;
+        mConversationArrayAdapter = new ArrayAdapter<String>(getActivity(), R.layout.message);
 
-        mConversationArrayAdapter = new ArrayAdapter<String>(this, R.layout.message);
+        ((AppCompatActivity) getActivity()).getSupportActionBar().show();
 
-
+        deviceSpinner = (Spinner) view.findViewById(R.id.deviceSpinner);
 
 
         System.out.println("start test");
 
-        Button startBackService = (Button)findViewById(R.id.start);
+        Button startBackService = (Button) view.findViewById(R.id.start);
         startBackService.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 // Start android service.
-                Intent startServiceIntent = new Intent(MonitoredActivity.this, MyService.class);
-                startService(startServiceIntent);
-                finish();
+                Intent startServiceIntent = new Intent(getActivity(), MyService.class);
+                getActivity().startService(startServiceIntent);
+                getActivity().finish();
             }
         });
 
-        Button stopBackService = (Button)findViewById(R.id.stop);
+        Button stopBackService = (Button)view.findViewById(R.id.stop);
         stopBackService.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 // Stop android service.
-            /*    Intent stopServiceIntent = new Intent(MonitoredActivity.this, MyService.class);
-                stopService(stopServiceIntent);*/
+                Intent stopServiceIntent = new Intent(getActivity(), MyService.class);
+                getActivity().stopService(stopServiceIntent);
 
-                Intent closeIntent = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
-                sendBroadcast(closeIntent);
+            /*    Intent closeIntent = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
+                getActivity().sendBroadcast(closeIntent);*/
 
 
 
@@ -131,25 +141,25 @@ public class MonitoredActivity extends AppCompatActivity {
                 startActivity(btintent);
             }
         });*/
-        Button bt = (Button)findViewById(R.id.btxfr);
+/*        Button bt = (Button)view.findViewById(R.id.btxfr);
         bt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 // Launch the DeviceListActivity to see devices and do scan
                 Intent btintent = null;
-                btintent = new Intent(MonitoredActivity.this, AdminActivity.class);
+                btintent = new Intent(getActivity(), AdminActivity.class);
                 startActivity(btintent);
             }
-        });
+        });*/
 
         boolean granted = false;
-        AppOpsManager appOps = (AppOpsManager) this
+        AppOpsManager appOps = (AppOpsManager) getActivity()
                 .getSystemService(Context.APP_OPS_SERVICE);
         int mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS,
-                android.os.Process.myUid(), this.getPackageName());
+                android.os.Process.myUid(), getActivity().getPackageName());
 
         if (mode == AppOpsManager.MODE_DEFAULT) {
-            granted = (this.checkCallingOrSelfPermission(android.Manifest.permission.PACKAGE_USAGE_STATS) == PackageManager.PERMISSION_GRANTED);
+            granted = (getActivity().checkCallingOrSelfPermission(android.Manifest.permission.PACKAGE_USAGE_STATS) == PackageManager.PERMISSION_GRANTED);
         } else {
             granted = (mode == AppOpsManager.MODE_ALLOWED);
         }
@@ -158,27 +168,34 @@ public class MonitoredActivity extends AppCompatActivity {
             startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));
         }
 
+    //TODO add read permission? Other permissions??
 
-
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+        if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.RECORD_AUDIO)
                 != PackageManager.PERMISSION_GRANTED) {
             System.out.println("no permission");
 
-            ActivityCompat.requestPermissions(this, new String[] { Manifest.permission.RECORD_AUDIO },
+            ActivityCompat.requestPermissions(getActivity(), new String[] { Manifest.permission.RECORD_AUDIO },
                     10);
 
         }
-        else if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        else if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 != PackageManager.PERMISSION_GRANTED) {
             System.out.println("no permission");
 
-            ActivityCompat.requestPermissions(this, new String[] { Manifest.permission.WRITE_EXTERNAL_STORAGE },
+            ActivityCompat.requestPermissions(getActivity(), new String[] { Manifest.permission.WRITE_EXTERNAL_STORAGE },
+                    10);
+
+        } else if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            System.out.println("no permission");
+
+            ActivityCompat.requestPermissions(getActivity(), new String[] { Manifest.permission.READ_EXTERNAL_STORAGE },
                     10);
 
         }else{
             System.out.println("setup");
 
-            ActivityManager am = (ActivityManager) this.getSystemService(Context.ACTIVITY_SERVICE);
+            ActivityManager am = (ActivityManager) getActivity().getSystemService(Context.ACTIVITY_SERVICE);
             List< ActivityManager.RunningTaskInfo > taskInfo = am.getRunningTasks(1);
 
             for(int i=0; i<taskInfo.size();i++){
@@ -191,7 +208,7 @@ public class MonitoredActivity extends AppCompatActivity {
 
             initRecorder();
             prepareRecorder();
-            mProjectionManager = (MediaProjectionManager) getSystemService
+            mProjectionManager = (MediaProjectionManager) getActivity().getSystemService
                     (Context.MEDIA_PROJECTION_SERVICE);
 
 /*            mToggleButton = (ToggleButton) findViewById(R.id.toggle);
@@ -207,7 +224,7 @@ public class MonitoredActivity extends AppCompatActivity {
         }
 
 
-
+        return view;
     }
 
     @Override
@@ -223,11 +240,11 @@ public class MonitoredActivity extends AppCompatActivity {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_CONNECT_DEVICE) {
             // When DeviceListActivity returns with a device to connect
-            if (resultCode == Activity.RESULT_OK) {
+            if (resultCode == RESULT_OK) {
                 connectDevice(data);
             }
         }
-        if (resultCode == Activity.RESULT_OK) {
+        if (resultCode == RESULT_OK) {
             connectDevice(data);
         }
         if (requestCode != PERMISSION_CODE) {
@@ -235,7 +252,7 @@ public class MonitoredActivity extends AppCompatActivity {
             return;
         }
         if (resultCode != RESULT_OK) {
-            Toast.makeText(this,
+            Toast.makeText(getActivity(),
                     "Screen Cast Permission Denied", Toast.LENGTH_SHORT).show();
             mToggleButton.setChecked(false);
             return;
@@ -302,7 +319,7 @@ public class MonitoredActivity extends AppCompatActivity {
             mMediaRecorder.prepare();
         } catch (IllegalStateException | IOException e) {
             e.printStackTrace();
-            finish();
+            getActivity().finish();
         }
     }
 
@@ -328,7 +345,7 @@ public class MonitoredActivity extends AppCompatActivity {
     public String getFilePath() {
         final String directory = Environment.getExternalStorageDirectory() + File.separator + "ParentScope";
         if (!Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
-            Toast.makeText(this, "Failed to get External Storage", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getActivity(), "Failed to get External Storage", Toast.LENGTH_SHORT).show();
             return null;
         }
         final File folder = new File(directory);
@@ -341,7 +358,7 @@ public class MonitoredActivity extends AppCompatActivity {
             String videoName = ("capture_" + getCurSysDate() + ".mp4");
             filePath = directory + File.separator + videoName;
         } else {
-            Toast.makeText(this, "Failed to create Recordings directory", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getActivity(), "Failed to create Recordings directory", Toast.LENGTH_SHORT).show();
             return null;
         }
         return filePath;
@@ -404,7 +421,7 @@ public class MonitoredActivity extends AppCompatActivity {
         // Get the BluetoothDevice object
         BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
         // Attempt to connect to the device
-        BluetoothChatService mChatService = new BluetoothChatService(this, mHandler);
+        BluetoothChatService mChatService = new BluetoothChatService(getActivity(), mHandler);
         mChatService.start();
         mChatService.connect(device);
     }
@@ -450,12 +467,12 @@ public class MonitoredActivity extends AppCompatActivity {
                 case MESSAGE_DEVICE_NAME:
                     // save the connected device's name
                     mConnectedDeviceName = msg.getData().getString(DEVICE_NAME);
-                    Toast.makeText(getApplicationContext(),
+                    Toast.makeText(getActivity().getApplicationContext(),
                             "Connected to " + mConnectedDeviceName,
                             Toast.LENGTH_SHORT).show();
                     break;
                 case MESSAGE_TOAST:
-                    Toast.makeText(getApplicationContext(),
+                    Toast.makeText(getActivity().getApplicationContext(),
                             msg.getData().getString(TOAST), Toast.LENGTH_SHORT)
                             .show();
                     break;

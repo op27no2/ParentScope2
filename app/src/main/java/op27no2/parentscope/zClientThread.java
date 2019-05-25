@@ -3,7 +3,6 @@ package op27no2.parentscope;
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
-import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -12,7 +11,6 @@ import android.util.Log;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.Method;
 import java.util.UUID;
 //THE SENDING DEVICE
 public class zClientThread extends Thread {
@@ -23,14 +21,14 @@ public class zClientThread extends Thread {
     public Handler incomingHandler;
     private String task;
     private static UUID MY_UUID = UUID.fromString(zConstants.UUID_STRING);
+    private int filesToSend;
 
-
-    public zClientThread(BluetoothDevice device, Handler handler, String task) {
+    public zClientThread(BluetoothDevice device, Handler handler, String task, int files) {
         BluetoothSocket tempSocket = null;
         this.handler = handler;
         this.task = task;
         this.device = device;
-
+        this.filesToSend = files;
 
         try {
             tempSocket = device.createRfcommSocketToServiceRecord(MY_UUID);
@@ -38,6 +36,7 @@ public class zClientThread extends Thread {
             Log.e(TAG, e.toString());
         }
         this.socket = tempSocket;
+        cancel();
 
     }
 
@@ -75,10 +74,11 @@ public class zClientThread extends Thread {
                     byte[] payload = (byte[])message.obj;
 
                     try {
-                        handler.sendEmptyMessage(zMessageType.SENDING_DATA);
+                        handler.sendEmptyMessage(zMessageType.SENDER_STARTED);
                         OutputStream outputStream = socket.getOutputStream();
 
                         // Send the header control first
+                        outputStream.write(filesToSend);
                         outputStream.write(zConstants.HEADER_MSB);
                         outputStream.write(zConstants.HEADER_LSB);
 

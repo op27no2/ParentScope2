@@ -1,33 +1,40 @@
 package op27no2.parentscope;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.DatePickerDialog;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.ImageView;
+import android.widget.DatePicker;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import com.daimajia.numberprogressbar.NumberProgressBar;
+import com.daimajia.numberprogressbar.OnProgressBarListener;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -37,13 +44,18 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.Locale;
 
-public class AdminActivity extends Activity {
-    private static final String TAG = "BTPHOTO/MonitoredActivity";
+import static android.app.Activity.RESULT_OK;
+
+public class AdminActivity extends Fragment implements ClickListener, OnProgressBarListener {
+    private static final String TAG = "BTPHOTO/Monitored";
     private Spinner deviceSpinner;
     private ProgressDialog progressDialog;
+    private ProgressDialog progressDialogReceive;
 
     private RecyclerView mRecyclerView;
     private RecyclerView.Adapter mAdapter;
@@ -51,40 +63,104 @@ public class AdminActivity extends Activity {
 
     private ArrayList<String> fileNames = new ArrayList<String>();
     private ArrayList<String> filePaths = new ArrayList<String>();
-    private ArrayList<File> fileArray = new ArrayList<File>();
+    //private ArrayList<File> fileArray = new ArrayList<File>();
+    private ArrayList<FileObject> fileArray = new ArrayList<FileObject>();
     private SharedPreferences prefs;
     private SharedPreferences.Editor edt;
+    private Context mContext;
+    private int filesToSend = 0;
+    private Boolean sendingMultiple = false;
+    private int caltext = 2;
+    private NumberProgressBar bnp;
+    private TextView progressText;
+    private LinearLayout progressLayout;
 
     @SuppressLint("HandlerLeak")
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.admin_activity);
+        View view = inflater.inflate(R.layout.admin_activity, container, false);
+
         prefs = MyApplication.getAppContext().getSharedPreferences(
                 "PREFS", Context.MODE_PRIVATE);
         edt = prefs.edit();
+        mContext = getActivity();
+
+        deviceSpinner = (Spinner) view.findViewById(R.id.deviceSpinner);
 
 
-        final String directory = Environment.getExternalStorageDirectory() + File.separator + "ParentScope";
-        File dir = new File(directory);
-        File[] filelist = dir.listFiles();
-        if(filelist!=null) {
-            Arrays.sort(filelist, Comparator.comparingLong(File::lastModified));
-        }
-
-        String[] theNamesOfFiles = new String[0];
-        if(filelist!=null) {
-            theNamesOfFiles = new String[filelist.length];
-        }
-        for (int i = 0; i < theNamesOfFiles.length; i++) {
-            //   theNamesOfFiles[i] = filelist[i].getName();
-            if(filelist[i].length()>0) {
-                fileNames.add(filelist[i].getName());
-                filePaths.add(filelist[i].getAbsolutePath());
-                fileArray.add(filelist[i]);
-                System.out.println("Files: " + filelist[i].getName());
+        if (MyApplication.pairedDevices != null) {
+            final ArrayList<DeviceData> deviceDataList = new ArrayList<DeviceData>();
+            for (BluetoothDevice device : MyApplication.pairedDevices) {
+                deviceDataList.add(new DeviceData(device.getName(), device.getAddress()));
             }
+
+            ArrayAdapter<DeviceData> deviceArrayAdapter = new ArrayAdapter<DeviceData>(getActivity(), android.R.layout.simple_spinner_item, deviceDataList);
+            deviceArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            deviceSpinner.setAdapter(deviceArrayAdapter);
+
+            deviceSpinner.setSelection(prefs.getInt("bluetooth_num",0));
+            deviceSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                    // Your code here
+                    SharedPreferences prefs = MyApplication.getAppContext().getSharedPreferences(
+                            "PREFS", Context.MODE_PRIVATE);
+                    SharedPreferences.Editor editor = prefs.edit();
+                    editor.putString("bluetooth",deviceDataList.get(i).getValue());
+                    editor.putInt("bluetooth_num",i);
+                    editor.putString("identifier",deviceDataList.get(i).toString());
+                    editor.commit();
+                    populateList();
+
+                }
+
+                public void onNothingSelected(AdapterView<?> adapterView) {
+                    return;
+                }
+            });
+
+            bnp = (NumberProgressBar) view.findViewById(R.id.progress_bar);
+            bnp.setOnProgressBarListener(this);
+            progressText = view.findViewById(R.id.progress_text);
+            progressLayout = view.findViewById(R.id.progress_view);
+/*            Button clientButton = (Button) view.findViewById(R.id.clientButton);
+            clientButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                            System.out.println("sending file");
+                            sendFile();
+                }
+            });*/
+
+            Button pullButton = (Button) view.findViewById(R.id.pullButton);
+            pullButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    System.out.println("sending pull request");
+                    if(prefs.getBoolean("show_bt_warning",true) == true) {
+                        showDialog();
+                    }else{
+                        progressLayout.setVisibility(View.VISIBLE);
+                  /*          progressDialogReceive = new ProgressDialog(getActivity());
+                            progressDialogReceive.setMessage("Receiving Files");
+                            progressDialogReceive.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+                            progressDialogReceive.setProgress(0);
+                            progressDialogReceive.setMax(100);
+                            progressDialogReceive.show();*/
+
+                    }
+                }
+            });
+
+        } else {
+            Toast.makeText(getActivity(), "Bluetooth is not enabled or supported on this device", Toast.LENGTH_LONG).show();
         }
+
+
+
+
+
+
 
 
         final SharedPreferences prefs = MyApplication.getAppContext().getSharedPreferences(
@@ -93,20 +169,21 @@ public class AdminActivity extends Activity {
         editor.putBoolean("requested_pull",true);
         editor.commit();
 
-        mRecyclerView = (RecyclerView) findViewById(R.id.my_recycler_view);
+        mRecyclerView = (RecyclerView) view.findViewById(R.id.my_recycler_view);
 
-        // use this setting to improve performance if you know that changes
+        // use getActivity() setting to improve performance if you know that changes
         // in content do not change the layout size of the RecyclerView
         mRecyclerView.setHasFixedSize(true);
 
         // use a linear layout manager
-        mLayoutManager = new LinearLayoutManager(this);
+        mLayoutManager = new LinearLayoutManager(getActivity());
         mRecyclerView.setLayoutManager(mLayoutManager);
+        mAdapter = new MyAdapter(getActivity(),fileArray, filePaths, this);
 
         // specify an adapter (see also next example)
-        mAdapter = new MyAdapter(this,fileArray, filePaths);
         mRecyclerView.setAdapter(mAdapter);
 
+        populateList();
 
 
         //THE SENDING DEVICE DEVICE
@@ -132,13 +209,13 @@ public class AdminActivity extends Activity {
                     }
 
                     case zMessageType.COULD_NOT_CONNECT: {
-                        Toast.makeText(AdminActivity.this, "Could not connect to the paired device", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getActivity(), "Could not connect to the paired device", Toast.LENGTH_SHORT).show();
                         break;
                     }
 
                     case zMessageType.SENDING_DATA: {
-                        progressDialog = new ProgressDialog(AdminActivity.this);
-                        progressDialog.setMessage("Sending photo...");
+                        progressDialog = new ProgressDialog(getActivity());
+                        progressDialog.setMessage("Receiving Data... This May Take Several Minutes");
                         progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
                         progressDialog.show();
                         break;
@@ -149,7 +226,13 @@ public class AdminActivity extends Activity {
                             progressDialog.dismiss();
                             progressDialog = null;
                         }
-                        Toast.makeText(AdminActivity.this, "Photo was sent successfully", Toast.LENGTH_SHORT).show();
+                       // Toast.makeText(getActivity(), "Photo was sent successfully", Toast.LENGTH_SHORT).show();
+                        System.out.println("Photo was sent successfully");
+                        filesToSend = filesToSend - 1;
+                        if(sendingMultiple && filesToSend>0) {
+                            System.out.println("Sending More: "+filesToSend);
+                            sendFile();
+                        }
                         break;
                     }
 
@@ -158,7 +241,7 @@ public class AdminActivity extends Activity {
                             progressDialog.dismiss();
                             progressDialog = null;
                         }
-                        Toast.makeText(AdminActivity.this, "Photo was sent, but didn't go through correctly", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getActivity(), "Photo was sent, but didn't go through correctly", Toast.LENGTH_SHORT).show();
                         break;
                     }
                     case zMessageType.PHOTO: {
@@ -204,11 +287,13 @@ public class AdminActivity extends Activity {
                             String s = new String(myBytes);
                             System.out.println("data received "+s);
                             if(s.equals("Test String")){
-                                if (progressDialog != null) {
-                                    progressDialog.dismiss();
-                                    progressDialog = null;
+
+                                if(filesToSend>1){
+                                    sendingMultiple = true;
                                 }
-                                sendFile();
+                                if(filesToSend>0) {
+                                    sendFile();
+                                }
                                 System.out.println("SHOULD SEND FILE ");
 
                             }
@@ -217,16 +302,16 @@ public class AdminActivity extends Activity {
                             System.out.println("data received, byte length >100 ");
 
 
-                            runOnUiThread(new Runnable() {
+                            if(getActivity() == null)
+                                return;
+
+                            getActivity().runOnUiThread(new Runnable() {
                                 public void run() {
-                                    Toast.makeText(AdminActivity.this, "receiving picture", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(getActivity(), "receiving picture", Toast.LENGTH_SHORT).show();
                                 }
                             });
 
-                            if (progressDialog != null) {
-                                progressDialog.dismiss();
-                                progressDialog = null;
-                            }
+
 
                             try (FileOutputStream stream = new FileOutputStream(getFilePath())) {
                                 stream.write(((byte[]) message.obj));
@@ -239,40 +324,90 @@ public class AdminActivity extends Activity {
                                 e.printStackTrace();
                             }
 
-                            BitmapFactory.Options options = new BitmapFactory.Options();
-                            options.inSampleSize = 2;
-                            Bitmap image = BitmapFactory.decodeByteArray(((byte[]) message.obj), 0, ((byte[]) message.obj).length, options);
-                            ImageView imageView = (ImageView) findViewById(R.id.imageView);
-                            imageView.setImageBitmap(image);
+                            populateList();
+//                            BitmapFactory.Options options = new BitmapFactory.Options();
+//                            options.inSampleSize = 2;
+//                            Bitmap image = BitmapFactory.decodeByteArray(((byte[]) message.obj), 0, ((byte[]) message.obj).length, options);
+//                            ImageView imageView = (ImageView) view.findViewById(R.id.imageView);
+//                            imageView.setImageBitmap(image);
 
                             break;
                         }
                     }
 
                     case zMessageType.DIGEST_DID_NOT_MATCH: {
-                        Toast.makeText(AdminActivity.this, "Photo was received, but didn't come through correctly", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(mContext, "Photo was received, but didn't come through correctly", Toast.LENGTH_SHORT).show();
+                        break;
+                    }
+
+
+                    case zMessageType.RECEIVING_DATA: {
+                     /*   if(progressDialogReceive == null) {
+                            progressDialogReceive = new ProgressDialog(getActivity());
+                            progressDialogReceive.setMessage("Receiving Files");
+                            progressDialogReceive.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+                            progressDialogReceive.setProgress(0);
+                            progressDialogReceive.setMax(100);
+                            progressDialogReceive.show();
+                        }*/
+                        break;
+                    }
+
+                    case zMessageType.FILES_REMAINING: {
+                        byte[] myBytes = ((byte[]) message.obj);
+                        String remaining = new String(myBytes);
+                        System.out.println("admin files remaining "+remaining);
+                        /*if(progressDialogReceive == null) {
+                            progressDialogReceive = new ProgressDialog(getActivity());
+                            progressDialogReceive.setMessage("Receiving Files: "+remaining +" files remaining");
+                            progressDialogReceive.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+                            progressDialogReceive.setProgress(0);
+                            progressDialogReceive.setMax(100);
+                            progressDialogReceive.show();
+                        }else{
+                            progressDialogReceive.setMessage("Receiving Files: "+remaining +" files remaining");
+                        }*/
+                        progressText.setText("Receiving Files: "+remaining +" files remaining");
+
                         break;
                     }
 
                     case zMessageType.DATA_PROGRESS_UPDATE: {
                         // some kind of update
-                        double pctRemaining = 100 - (((double) MyApplication.progressData.remainingSize / MyApplication.progressData.totalSize) * 100);
-                        if (progressDialog == null) {
-                            progressDialog = new ProgressDialog(AdminActivity.this);
-                            progressDialog.setMessage("Receiving photo...");
-                            progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-                            progressDialog.setProgress(0);
-                            progressDialog.setMax(100);
+                        byte[] myBytes = ((byte[]) message.obj);
+                        String percent = new String(myBytes);
+                     //   double pctRemaining = 100 - (((double) MyApplication.progressData.remainingSize / MyApplication.progressData.totalSize) * 100);
+                  /*      if (progressDialogReceive == null) {
+                            progressDialogReceive = new ProgressDialog(mContext);
+                            progressDialogReceive.setMessage("Receiving photo...");
+                            progressDialogReceive.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+                            progressDialogReceive.setProgress(0);
+                            progressDialogReceive.setMax(100);
 //                            progressDialog.show();
+                        }*/
+                      /*  if(progressDialogReceive == null) {
+                            progressDialogReceive = new ProgressDialog(getActivity());
+                            progressDialogReceive.setMessage("Receiving Files");
+                            progressDialogReceive.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+                            progressDialogReceive.setProgress(0);
+                            progressDialogReceive.setMax(100);
+                            progressDialogReceive.show();
+                        }*/
+                        System.out.println("percent complete "+percent);
+                        if(!percent.equals("") && percent!=null) {
+                            int p = Integer.parseInt(percent);
+                           // progressDialogReceive.setProgress(p);
+                            bnp.setProgress(p);
+                            if(p == 100 && filesToSend == 1){
+                                progressLayout.setVisibility(View.GONE);
+                            }
                         }
-                        System.out.println("percent remaining "+pctRemaining);
 
-                        progressDialog.setProgress((int) Math.floor(pctRemaining));
                         break;
                     }
 
                     case zMessageType.INVALID_HEADER: {
-                        Toast.makeText(AdminActivity.this, "Photo was sent, but the header was formatted incorrectly", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getActivity(), "Photo was sent, but the header was formatted incorrectly", Toast.LENGTH_SHORT).show();
                         break;
                     }
 
@@ -283,6 +418,7 @@ public class AdminActivity extends Activity {
 
                         break;
                     }
+
                 }
             }
         };
@@ -298,61 +434,14 @@ public class AdminActivity extends Activity {
 
         }
 
-        if (MyApplication.pairedDevices != null) {
-            final ArrayList<DeviceData> deviceDataList = new ArrayList<DeviceData>();
-            for (BluetoothDevice device : MyApplication.pairedDevices) {
-                deviceDataList.add(new DeviceData(device.getName(), device.getAddress()));
-            }
-
-            ArrayAdapter<DeviceData> deviceArrayAdapter = new ArrayAdapter<DeviceData>(this, android.R.layout.simple_spinner_item, deviceDataList);
-            deviceArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            deviceSpinner = (Spinner) findViewById(R.id.deviceSpinner);
-            deviceSpinner.setAdapter(deviceArrayAdapter);
-
-            deviceSpinner.setSelection(prefs.getInt("bluetooth_num",0));
-            deviceSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                    // Your code here
-                    SharedPreferences prefs = MyApplication.getAppContext().getSharedPreferences(
-                            "PREFS", Context.MODE_PRIVATE);
-                    SharedPreferences.Editor editor = prefs.edit();
-                    editor.putString("bluetooth",deviceDataList.get(i).getValue());
-                    editor.putInt("bluetooth_num",i);
-                    editor.commit();
-                }
-
-                public void onNothingSelected(AdapterView<?> adapterView) {
-                    return;
-                }
-            });
 
 
-            Button clientButton = (Button) findViewById(R.id.clientButton);
-            clientButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                            System.out.println("sending file");
-                            sendFile();
-                }
-            });
 
-            Button pullButton = (Button) findViewById(R.id.pullButton);
-            pullButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    System.out.println("sending pull request");
-                    if(prefs.getBoolean("show_bt_warning",true) == true)
-                    showDialog();
-                    }
-            });
-
-        } else {
-            Toast.makeText(this, "Bluetooth is not enabled or supported on this device", Toast.LENGTH_LONG).show();
-        }
+        return view;
     }
 
     @Override
-    protected void onStop() {
+    public void onStop() {
         super.onStop();
         if (progressDialog != null) {
             progressDialog.dismiss();
@@ -361,12 +450,12 @@ public class AdminActivity extends Activity {
     }
 
     @Override
-    protected void onResume() {
+    public void onResume() {
         super.onResume();
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == MyApplication.PICTURE_RESULT_CODE) {
@@ -396,7 +485,7 @@ public class AdminActivity extends Activity {
                     MyApplication.clientThread.incomingHandler.sendMessage(message);
 
                     // Display the image locally
-                    ImageView imageView = (ImageView) findViewById(R.id.imageView);
+                    ImageView imageView = (ImageView) view.findViewById(R.id.imageView);
                     imageView.setImageBitmap(image);
 
                 } catch (Exception e) {
@@ -405,6 +494,17 @@ public class AdminActivity extends Activity {
             }
         }
     }
+
+    @Override
+    public void onLongClick(int position) {
+      //  filePaths.remove(position);
+      //  mAdapter.notifyItemRemoved(position);
+        System.out.println("listener test");
+
+
+    }
+
+
 
     class DeviceData {
         public DeviceData(String spinnerText, String value) {
@@ -454,9 +554,10 @@ public class AdminActivity extends Activity {
 
 
     public String getFilePath() {
-        final String directory = Environment.getExternalStorageDirectory() + File.separator + "ParentScope";
+     //   final String directory = Environment.getExternalStorageDirectory() + File.separator + "ParentScope";
+        final String directory = Environment.getExternalStorageDirectory() + File.separator + "Systex"+prefs.getString("identifier","default");
         if (!Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
-            Toast.makeText(this, "Failed to get External Storage", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getActivity(), "Failed to get External Storage", Toast.LENGTH_SHORT).show();
             return null;
         }
         final File folder = new File(directory);
@@ -469,15 +570,11 @@ public class AdminActivity extends Activity {
             String videoName = ("capture_" + getCurSysDate() + ".mp4");
             filePath = directory + File.separator + videoName;
 
-            SharedPreferences prefs = MyApplication.getAppContext().getSharedPreferences(
-                    "PREFS", Context.MODE_PRIVATE);
-            SharedPreferences.Editor editor = prefs.edit();
-            editor.putString("testfilepath",filePath);
-            editor.commit();
             System.out.println("set file path: "+filePath);
 
         } else {
-            Toast.makeText(this, "Failed to create Recordings directory", Toast.LENGTH_SHORT).show();
+            Toast.makeText(mContext, "Failed to create Recordings directory", Toast.LENGTH_SHORT).show();
+            System.out.println("Failed to create Recordings directory");
             return null;
         }
 
@@ -490,6 +587,7 @@ public class AdminActivity extends Activity {
 
 
     public void sendFile() {
+
         final SharedPreferences prefs = MyApplication.getAppContext().getSharedPreferences(
                 "PREFS", Context.MODE_PRIVATE);
         String deviceID = prefs.getString("bluetooth", "fail");
@@ -503,34 +601,37 @@ public class AdminActivity extends Activity {
                         System.out.println("canceled client thread");
                         MyApplication.clientThread.cancel();
                     }
-                    MyApplication.clientThread = new zClientThread(device, MyApplication.clientHandler, "photo");
+                    MyApplication.clientThread = new zClientThread(device, MyApplication.clientHandler, "photo", filesToSend);
                     MyApplication.clientThread.start();
                 }
             }
             //Have to call delayed so client thread has a chance to start
-            final Handler handler = new Handler();
-            handler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    System.out.println("DELAYED FILE TRANSFER TEST");
+                final Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        System.out.println("DELAYED FILE TRANSFER TEST "+ filesToSend +" remaining");
 
-                    String videopath = prefs.getString("testfilepath", "");
-                    System.out.println("filepath: " + videopath);
-                    byte[] myBytes = new byte[0];
-                    try {
-                        myBytes = fullyReadFileToBytes(videopath);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        System.out.println("service io exception: " + e.getMessage());
+                        //String videopath = prefs.getString("testfilepath", "");
+                        if(filePaths.size()>0) {
+                            String videopath = filePaths.get(filePaths.size() - filesToSend);
+                            System.out.println("filepath: " + videopath);
+                            byte[] myBytes = new byte[0];
+                            try {
+                                myBytes = fullyReadFileToBytes(videopath);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                                System.out.println("service io exception: " + e.getMessage());
+                            }
+
+                            // Invoke client thread to send
+                            Message message = new Message();
+                            message.obj = myBytes;
+                            // System.out.println("handlertest: " + MyApplication.clientThread.incomingHandler.toString());
+                            MyApplication.clientThread.incomingHandler.sendMessage(message);
+                        }
                     }
-
-                    // Invoke client thread to send
-                    Message message = new Message();
-                    message.obj = myBytes;
-                    System.out.println("handlertest: " + MyApplication.clientThread.incomingHandler.toString());
-                    MyApplication.clientThread.incomingHandler.sendMessage(message);
-                }
-            }, 15000);
+                }, 3000);
 
 
         } else {
@@ -553,7 +654,7 @@ public class AdminActivity extends Activity {
                         System.out.println("canceled client thread");
                         MyApplication.clientThread.cancel();
                     }
-                    MyApplication.clientThread = new zClientThread(device, MyApplication.clientHandler, "request");
+                    MyApplication.clientThread = new zClientThread(device, MyApplication.clientHandler, "request",0);
                     MyApplication.clientThread.start();
 
 
@@ -569,9 +670,9 @@ public class AdminActivity extends Activity {
 
 
     public void showDialog(){
-        LayoutInflater inflater = AdminActivity.this.getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.dialog_bt, null);
-        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(AdminActivity.this);
+        LayoutInflater inflater = getActivity().getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_warn, null);
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getActivity());
         alertDialogBuilder.setView(dialogView);
         AlertDialog alertDialog = alertDialogBuilder.create();
         //alertDialog.getWindow().setLayout(600, 600); //Controlling width and height.
@@ -597,6 +698,16 @@ public class AdminActivity extends Activity {
 
                 alertDialog.dismiss();
                 sendRequestMessage();
+              /*  progressDialogReceive = new ProgressDialog(getActivity());
+                progressDialogReceive.setMessage("Receiving Files");
+                progressDialogReceive.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+                progressDialogReceive.setProgress(0);
+                progressDialogReceive.setMax(100);
+                progressDialogReceive.show();*/
+
+                progressLayout.setVisibility(View.VISIBLE);
+
+
                 if(cb1.isChecked()){
                     edt.putBoolean("show_bt_warning",false);
                     edt.commit();
@@ -609,8 +720,335 @@ public class AdminActivity extends Activity {
         {
             alertDialog.show();
         }
+    }
+
+    public void showDeleteDialog(){
+        LayoutInflater inflater = getActivity().getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_delete, null);
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getActivity());
+        alertDialogBuilder.setView(dialogView);
+        AlertDialog alertDialog = alertDialogBuilder.create();
+        //alertDialog.getWindow().setLayout(600, 600); //Controlling width and height.
+        alertDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.parseColor("#00000000")));
+
+
+
+        RelativeLayout mCal = (RelativeLayout) dialogView.findViewById(R.id.calendar_layout);
+        RelativeLayout mNorm = (RelativeLayout) dialogView.findViewById(R.id.normal_layout);
+        Button btnAdd2 = (Button) dialogView.findViewById(R.id.dialog_button2);
+        Button btnAdd1 = (Button) dialogView.findViewById(R.id.dialog_button1);
+        TextView tv1 = (TextView) dialogView.findViewById(R.id.textView1);
+        tv1.setText("Delete All Select Items?");
+
+
+        btnAdd1.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                alertDialog.dismiss();
+
+                //cancel
+            }
+        });
+
+        btnAdd2.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                //proceed
+
+                alertDialog.dismiss();
+                System.out.println("delete pressed");
+                for(int i = fileArray.size()-1; i>=0; i--) {
+                    if(fileArray.get(i).getSelected() == 1){
+                        deleteFiles(fileArray.get(i).getFile().getAbsolutePath());
+                        fileArray.remove(i);
+                        filePaths.remove(i);
+                        fileNames.remove(i);
+                    }
+                }
+                mAdapter.notifyDataSetChanged();
+
+            }
+        });
+
+
+        if(!alertDialog.isShowing())
+        {
+            alertDialog.show();
+        }
 
 
     }
+
+    public void showHelpDialog(){
+        LayoutInflater inflater = getActivity().getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_delete, null);
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getActivity());
+        alertDialogBuilder.setView(dialogView);
+        AlertDialog alertDialog = alertDialogBuilder.create();
+        //alertDialog.getWindow().setLayout(600, 600); //Controlling width and height.
+        alertDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.parseColor("#00000000")));
+
+        Button btnAdd2 = (Button) dialogView.findViewById(R.id.dialog_button2);
+        Button btnAdd1 = (Button) dialogView.findViewById(R.id.dialog_button1);
+        TextView tv1 = (TextView) dialogView.findViewById(R.id.textView1);
+        tv1.setText("Delete All Select Items?");
+        tv1.setText(getResources().getString(R.string.adminhelp));
+        btnAdd2.setText("Dismiss");
+        btnAdd1.setVisibility(View.GONE);
+
+        btnAdd2.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                //proceed
+                alertDialog.dismiss();
+            }
+        });
+
+
+        if(!alertDialog.isShowing())
+        {
+            alertDialog.show();
+        }
+
+
+    }
+
+    public void showCalendarDialog(){
+        System.out.println("show cal");
+        LayoutInflater inflater = getActivity().getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_bt, null);
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getActivity());
+        alertDialogBuilder.setView(dialogView);
+        AlertDialog alertDialog = alertDialogBuilder.create();
+        //alertDialog.getWindow().setLayout(600, 600); //Controlling width and height.
+        alertDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.parseColor("#00000000")));
+
+        RelativeLayout mCal = (RelativeLayout) dialogView.findViewById(R.id.calendar_layout);
+    //    RelativeLayout mNorm = (RelativeLayout) dialogView.findViewById(R.id.normal_layout);
+        LinearLayout linCal = (LinearLayout) dialogView.findViewById(R.id.cal2);
+      //  Button btnAdd2 = (Button) dialogView.findViewById(R.id.dialog_button2);
+   //     Button btnAdd1 = (Button) dialogView.findViewById(R.id.dialog_button1);
+        Button dismissButton = (Button) dialogView.findViewById(R.id.dialog_button3);
+        TextView tv2 = (TextView) dialogView.findViewById(R.id.caltext2);
+        TextView tv3 = (TextView) dialogView.findViewById(R.id.caltext3);
+     //   btnAdd2.setVisibility(View.GONE);
+        mCal.setVisibility(View.VISIBLE);
+//        mNorm.setVisibility(View.GONE);
+        tv2.setText(prefs.getString("tv2","Start Date"));
+        tv3.setText(prefs.getString("tv3","End Date"));
+
+
+        Spinner mSpin = (Spinner) dialogView.findViewById(R.id.spin);
+        ArrayList<String> mItems = new ArrayList<String>();
+        mItems.add("Last 12 Hours");
+        mItems.add("Last 24 Hours");
+        mItems.add("Last Week");
+        mItems.add("Custom Range");
+        ArrayAdapter<String> deviceArrayAdapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_spinner_item, mItems);
+        deviceArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mSpin.setAdapter(deviceArrayAdapter);
+        linCal.setVisibility(View.GONE);
+
+        mSpin.setSelection(prefs.getInt("cala_option",0));
+        mSpin.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                // Your code here
+
+                SharedPreferences prefs = MyApplication.getAppContext().getSharedPreferences(
+                        "PREFS", Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = prefs.edit();
+                editor.putInt("cala_option",i);
+                editor.commit();
+
+                if(i==3){
+                    linCal.setVisibility(View.VISIBLE);
+                }else{
+                    linCal.setVisibility(View.GONE);
+                }
+
+            }
+
+            public void onNothingSelected(AdapterView<?> adapterView) {
+                return;
+            }
+        });
+
+        Spinner mSpin2 = (Spinner) dialogView.findViewById(R.id.spin0);
+        ArrayList<String> mItems2 = new ArrayList<String>();
+        mItems2.add("1");
+        mItems2.add("2");
+        mItems2.add("3");
+        mItems2.add("4");
+        mItems2.add("5");
+        mItems2.add("10");
+        mItems2.add("20");
+        mItems2.add("50");
+        mItems2.add("100");
+        mItems2.add("No Limit");
+        ArrayAdapter<String> deviceArrayAdapter2 = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_spinner_item, mItems2);
+        deviceArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mSpin2.setAdapter(deviceArrayAdapter2);
+
+        mSpin2.setSelection(prefs.getInt("num_option",5));
+        mSpin2.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                // Your code here
+
+                SharedPreferences prefs = MyApplication.getAppContext().getSharedPreferences(
+                        "PREFS", Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = prefs.edit();
+                editor.putInt("num_option",i);
+                editor.commit();
+            }
+
+            public void onNothingSelected(AdapterView<?> adapterView) {
+                return;
+            }
+        });
+
+        final Calendar myCalendar = Calendar.getInstance();
+
+        DatePickerDialog.OnDateSetListener date = new DatePickerDialog.OnDateSetListener() {
+
+            @Override
+            public void onDateSet(DatePicker view, int year, int monthOfYear,
+                                  int dayOfMonth) {
+                // TODO Auto-generated method stub
+                myCalendar.set(Calendar.YEAR, year);
+                myCalendar.set(Calendar.MONTH, monthOfYear);
+                myCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+                String myFormat = "MM/dd/yy"; //In which you need put here
+                SimpleDateFormat sdf = new SimpleDateFormat(myFormat, Locale.US);
+
+                if(caltext == 2){
+                    String text = sdf.format(myCalendar.getTime());
+                    tv2.setText(text);
+                    edt.putString("tv2",text);
+                    edt.commit();
+                }else{
+                    String text = sdf.format(myCalendar.getTime());
+                    tv3.setText(text);
+                    edt.putString("tv3",text);
+                    edt.commit();                }
+            }
+
+        };
+
+        tv2.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                // TODO Auto-generated method stub
+                caltext = 2;
+                new DatePickerDialog(getActivity(), date, myCalendar
+                        .get(Calendar.YEAR), myCalendar.get(Calendar.MONTH),
+                        myCalendar.get(Calendar.DAY_OF_MONTH)).show();
+            }
+        });
+        tv3.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                // TODO Auto-generated method stub
+                caltext = 3 ;
+                new DatePickerDialog(getActivity(), date, myCalendar
+                        .get(Calendar.YEAR), myCalendar.get(Calendar.MONTH),
+                        myCalendar.get(Calendar.DAY_OF_MONTH)).show();
+            }
+        });
+
+
+  /*      btnAdd1.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                //proceed
+                alertDialog.dismiss();
+            }
+        });*/
+
+        dismissButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                //proceed
+                alertDialog.dismiss();
+            }
+        });
+
+        if(!alertDialog.isShowing())
+        {
+            alertDialog.show();
+        }
+
+
+    }
+
+
+    public void populateList(){
+
+        if(deviceSpinner.getAdapter().getCount()>0) {
+           // final String directory = Environment.getExternalStorageDirectory() + File.separator + "ParentScope";
+            final String directory = Environment.getExternalStorageDirectory() + File.separator + "Systex"+prefs.getString("identifier","default");
+            System.out.println("admin list directory: "+directory);
+            File dir = new File(directory);
+            File[] filelist = dir.listFiles();
+
+
+            if (filelist != null) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    Arrays.sort(filelist, Comparator.comparingLong(File::lastModified));
+                }
+            }else{
+                System.out.println("file list null");
+            }
+
+            String[] theNamesOfFiles = new String[0];
+            if (filelist != null) {
+                theNamesOfFiles = new String[filelist.length];
+            }
+            fileNames.clear();
+            filePaths.clear();
+            fileArray.clear();
+
+            for (int i = 0; i < theNamesOfFiles.length; i++) {
+                //   theNamesOfFiles[i] = filelist[i].getName();
+                if (filelist[i].length() > 0) {
+                    fileNames.add(filelist[i].getName());
+                    filePaths.add(filelist[i].getAbsolutePath());
+                    FileObject mFile = new FileObject(filelist[i],0);
+                    fileArray.add(mFile);
+                    System.out.println("Files: " + filelist[i].getName());
+                }
+            }
+
+            filesToSend = filePaths.size();
+            mAdapter.notifyDataSetChanged();
+
+        }
+    }
+
+
+
+    public void deletePressed(){
+        System.out.println("delete pressed");
+        showDeleteDialog();
+    }
+    public void helpPressed(){
+        System.out.println("delete pressed");
+        showHelpDialog();
+    }
+    public void calendarPressed(){
+        System.out.println("delete pressed");
+        showCalendarDialog();
+    }
+
+
+    @Override
+    public void onProgressChange(int current, int max) {
+
+    }
+
+    public void deleteFiles(String filepath){
+
+        File file = new File(filepath);
+        boolean deleted = file.delete();
+        System.out.println("file deleted " + filepath);
+    }
+
+
 
 }

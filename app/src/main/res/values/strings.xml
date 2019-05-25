@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Scoped</string>
+    <string name="app_name">Heron</string>
     <!--  BluetoothChat -->
     <string name="send">Send</string>
     <string name="not_connected">You are not connected to a device</string>
@@ -22,10 +22,29 @@
     <string name="discoverable">Make discoverable</string>
 
     <!-- Options Menu -->
-    <string name="Instructions1"> Install Companion App to the device that you would like to monitor. Enable the permissions as requested during install. Be sure to give permission to the service to start capturing screen data. Be sure to pair the two devices to allow for future data transfer</string>
+    <string name="Instructions1"> On First installation, press the "start service" button below to begin monitoring
+        (this will start automatically on-boot in the future). \n\nA pop-up message will request permission to screen capture - grant permission and check "do not show again."
+        The "start service" button can be used at any time if it has stopped due to errors or other reasons. \n\nBe sure to enable the permissions for "Record Audio" and "Usage Access" requested during install. Make sure this device is paired
+        with the administrator phone to allow for future data transfer. </string>
+
     <string name="Instructions2"> It is best to obtain concurrence from the monitored user. Alternatively, you will need to enforce bluetooth pairing through disbling access to settings </string>
     <string name="Instructions3"> Currently, Android does not allow any app to prevent the user from uninstalling it through safe mode. Scoped will alert you if it appears the companion app has not run in the last 24 hours. </string>
     <string name="Instructions4"> Third party apps with root access may provide stricter installation control on the monitored phone. Alternatively, we recommend revoking device access unless the monitored user agrees to installation</string>
+
+
+    <string name="appbar_scrolling_view_behavior" translatable="false">android.support.design.widget.AppBarLayout$ScrollingViewBehavior</string>
+
+    <string name="adminhelp"> Select the monitored device under \"target devices\" to view and retrieve monitored screenshots/videos. Press \"retrieve data\" to download files. Press the Calendar icon to adjust download settings</string>
+    <string name="calendar"> Maximum Files to Receive</string>
+
+
+    <string-array name="options">
+        <item>Home</item>
+        <item>Settings</item>
+        <item>Help &amp; Feedback</item>
+        <item>Subscription</item>
+    </string-array>
+
 
 
 </resources>

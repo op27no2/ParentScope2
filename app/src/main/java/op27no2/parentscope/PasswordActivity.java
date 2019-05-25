@@ -4,13 +4,18 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
-public class PasswordActivity extends AppCompatActivity {
+public class PasswordActivity extends Fragment {
 
     private Button adminButton;
     private Button monitoredButton;
@@ -21,33 +26,44 @@ public class PasswordActivity extends AppCompatActivity {
     private LinearLayout passwordLayout;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.password_activity);
+        View view = inflater.inflate(R.layout.password_activity, container, false);
+
+        ((AppCompatActivity) getActivity()).getSupportActionBar().hide();
+
+
         prefs = MyApplication.getAppContext().getSharedPreferences(
                 "PREFS", Context.MODE_PRIVATE);
         edt = prefs.edit();
 
 
-        editText = (EditText) findViewById(R.id.edit_text);
+        editText = (EditText) view.findViewById(R.id.edit_text);
 
-        enterButton = (Button) findViewById(R.id.proceed);
+        enterButton = (Button) view.findViewById(R.id.proceed);
         enterButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 String pw = prefs.getString("Password","");
                 if(pw.equals(editText.getText().toString())){
-                    Intent btintent = null;
-                    btintent = new Intent(PasswordActivity.this, MonitoredActivity.class);
-                    //TODO add back
-                    //btintent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                    startActivity(btintent);
+                    MonitoredActivity frag = new MonitoredActivity();
+                    showOtherFragment(frag, false);
+
+                    InputMethodManager imm = (InputMethodManager) getActivity().getSystemService( Context.INPUT_METHOD_SERVICE );
+                    View f = getActivity().getCurrentFocus();
+                    if( null != f && null != f.getWindowToken() && EditText.class.isAssignableFrom( f.getClass() ) )
+                        imm.hideSoftInputFromWindow( f.getWindowToken(), 0 );
+                    else {
+                        getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+                    }
                 }
 
 
             }
         });
 
+
+        return view;
     }
 
 
@@ -65,7 +81,11 @@ public class PasswordActivity extends AppCompatActivity {
     }
 
 
-
+    public void showOtherFragment(Fragment fr, Boolean addToStack)
+    {
+        FragmentChangeListener fc=(FragmentChangeListener)getActivity();
+        fc.replaceFragment(fr, addToStack);
+    }
 
 
 }

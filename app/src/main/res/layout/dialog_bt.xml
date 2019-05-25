@@ -2,65 +2,166 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="300dp"
+    android:layout_margin="20dp"
+    android:layout_width="match_parent"
     android:layout_height="300dp"
     android:background="#FFFFFF"
+    android:animateLayoutChanges="true"
     tools:context=".MonitoredActivity">
 
 
     <RelativeLayout
+        android:id="@+id/calendar_layout"
         android:paddingTop="40dp"
         android:paddingBottom="40dp"
         android:orientation="vertical"
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content">
-    <TextView
-        android:id="@+id/textView1"
-        android:layout_margin="5dp"
-        android:layout_centerHorizontal="true"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="20sp"
-        android:textAlignment="center"
-        android:text="Make Sure Target Devices Are Paried" />
+
+        <TextView
+            android:id="@+id/tv2"
+            android:layout_margin="5dp"
+            android:padding="10dp"
+            android:layout_centerHorizontal="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="24sp"
+            android:textAlignment="center"
+            android:text="Retrieve Files Settings:" />
+        <LinearLayout
+            android:id="@+id/cal1"
+            android:layout_marginTop="20dp"
+            android:layout_below="@+id/tv2"
+            android:orientation="vertical"
+            android:layout_centerHorizontal="true"
+            android:gravity="center_vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+   <!--         <LinearLayout
+                android:layout_below="@+id/tv2"
+                android:orientation="horizontal"
+                android:layout_centerHorizontal="true"
+                android:gravity="center_vertical"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+                <TextView
+                    android:id="@+id/caltextn"
+                    android:layout_margin="5dp"
+                    android:layout_centerHorizontal="true"
+                    android:layout_width="155dp"
+                    android:layout_height="wrap_content"
+                    android:textSize="20sp"
+                    android:text="Only New Files" />
+
+                <com.kyleduo.switchbutton.SwitchButton
+                    android:id="@+id/switch_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:kswBackColor="@color/mediumGray"
+                    app:kswTintColor="@color/colorAccent"
+                    app:kswTextOn="On"
+                    app:kswTextOff="Off"
+                    app:kswTextExtra="14dp"
+                    tools:ignore="RtlHardcoded"/>
 
 
-    <LinearLayout
-        android:id="@+id/buttons"
-        android:orientation="horizontal"
-        android:layout_below="@+id/textView1"
-        android:layout_centerHorizontal="true"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
-    <Button
-        android:id="@+id/dialog_button1"
-        android:layout_margin="5dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Cancel"
-        style="@style/Widget.AppCompat.Button.Colored"
-        />
+            </LinearLayout>-->
+            <LinearLayout
+                android:layout_below="@+id/tv2"
+                android:orientation="horizontal"
+                android:layout_centerHorizontal="true"
+                android:gravity="center_vertical"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+                <TextView
+                    android:id="@+id/caltext0"
+                    android:layout_margin="5dp"
+                    android:layout_width="150dp"
+                    android:layout_height="wrap_content"
+                    android:textSize="20sp"
+                    android:text="File Limit \nPer Retrieval:" />
 
-    <Button
-        android:id="@+id/dialog_button2"
-        android:layout_margin="5dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Proceed"
-        style="@style/Widget.AppCompat.Button.Colored"
-         />
-    </LinearLayout>
+                <Spinner
+                    android:id="@+id/spin0"
+                    android:textSize="20sp"
+                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content">
 
-    <CheckBox
-        android:id="@+id/checkbox"
-        android:layout_margin="5dp"
-        android:layout_below="@+id/buttons"
-        android:layout_centerHorizontal="true"
-        android:text="Do Not Show again"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+                </Spinner>
+
+            </LinearLayout>
+            <LinearLayout
+                android:layout_below="@+id/tv2"
+                android:orientation="horizontal"
+                android:layout_centerHorizontal="true"
+                android:gravity="center_vertical"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+                <TextView
+                    android:id="@+id/caltext1"
+                    android:layout_margin="5dp"
+                    android:layout_centerHorizontal="true"
+                    android:layout_width="150dp"
+                    android:layout_height="wrap_content"
+                    android:textSize="20sp"
+                    android:text="Date Range:" />
+
+                <Spinner
+                    android:id="@+id/spin"
+                    android:textSize="20sp"
+                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content">
+
+                </Spinner>
+
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/cal2"
+                android:layout_below="@+id/tv2"
+                android:orientation="horizontal"
+                android:layout_marginTop="20dp"
+                android:layout_gravity="center_horizontal"
+                android:gravity="center_vertical"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+                <TextView
+                    android:id="@+id/caltext2"
+                    android:layout_margin="20dp"
+                    android:layout_centerHorizontal="true"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="20sp"
+                    android:textAlignment="center"
+                    android:text="Start Date" />
+
+                <TextView
+                    android:id="@+id/caltext3"
+                    android:layout_margin="20dp"
+                    android:layout_centerHorizontal="true"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="20sp"
+                    android:textAlignment="center"
+                    android:text="End Date" />
+
+
+            </LinearLayout>
+        </LinearLayout>
+
+        <Button
+            android:layout_below="@+id/cal1"
+            android:layout_centerHorizontal="true"
+            android:id="@+id/dialog_button3"
+            android:layout_margin="5dp"
+            android:layout_marginTop="15dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Dismiss"
+            style="@style/Widget.AppCompat.Button.Colored"
+            />
+
     </RelativeLayout>
 
 </RelativeLayout>

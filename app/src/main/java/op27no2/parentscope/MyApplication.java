@@ -10,7 +10,11 @@ import android.media.projection.MediaProjectionManager;
 import android.os.Handler;
 import android.util.Log;
 
+import com.crashlytics.android.Crashlytics;
+
 import java.util.Set;
+
+import io.fabric.sdk.android.Fabric;
 
 public class MyApplication extends android.app.Application {
 
@@ -39,6 +43,9 @@ public class MyApplication extends android.app.Application {
         System.out.println("APPLICATION ONCREATE");
         MyApplication.context = getApplicationContext();
         instance = this;
+
+        Fabric.with(this, new Crashlytics());
+
 
         //btxfr
         adapter = BluetoothAdapter.getDefaultAdapter();

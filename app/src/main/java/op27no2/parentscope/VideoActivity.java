@@ -30,12 +30,15 @@ import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.transition.TransitionInflater;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -60,7 +63,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
-public class VideoActivity extends AppCompatActivity {
+public class VideoActivity extends Fragment {
     private VideoView vv;
     private MediaController mediaController;
     private SeekBar seekBar;
@@ -72,22 +75,20 @@ public class VideoActivity extends AppCompatActivity {
     private Button playButton;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.video_activity);
+        View view = inflater.inflate(R.layout.video_activity, container, false);
 
-        getWindow().setSharedElementEnterTransition(TransitionInflater.from(this).inflateTransition(R.transition.shared_element_transition));
-        mainImage = (ImageView) findViewById(R.id.main_image);
 
-        Bundle extras = getIntent().getExtras();
-        Uri uri = Uri.parse(extras.getString("bitmap_uri"));
+        getActivity().getWindow().setSharedElementEnterTransition(TransitionInflater.from(getActivity()).inflateTransition(R.transition.shared_element_transition));
+        mainImage = (ImageView) view.findViewById(R.id.main_image);
 
-      //  Bitmap bitmap2 = ThumbnailUtils.createVideoThumbnail( uri.getPath() , MediaStore.Images.Thumbnails.MINI_KIND );
-      //  mainImage.setImageBitmap(bitmap2);
+       // Bundle extras = getActivity().getIntent().getExtras();
+        Uri uri = Uri.parse(getArguments().getString("bitmap_uri", ""));
+        //Uri uri = Uri.parse(extras.getString("bitmap_uri"));
+
         mainImage.setTransitionName("thumbnailTransition");
 
-
-      //  Glide.with(this).load(uri).thumbnail().into(mainImage);
 
         Glide
                 .with(this)
@@ -110,12 +111,14 @@ public class VideoActivity extends AppCompatActivity {
                 .into(mainImage);
 
 
-        vv = findViewById(R.id.videoView);
-        hideVideo();
-        this.seekBar= (SeekBar) this.findViewById(R.id.seekBar);
-        this.seekBar.setClickable(false);
+        vv = view.findViewById(R.id.videoView);
 
-        mediaController = new MediaController(this);
+
+        hideVideo();
+        seekBar= (SeekBar) view.findViewById(R.id.seekBar);
+        seekBar.setClickable(false);
+
+        mediaController = new MediaController(getActivity());
         vv.setMediaController(mediaController);
 
         vv.setVideoURI(uri);
@@ -124,6 +127,7 @@ public class VideoActivity extends AppCompatActivity {
             public void onPrepared(MediaPlayer mp) {
                 int duration = mp.getDuration();
                 int videoDuration = vv.getDuration();
+
                 System.out.println("video duration: "+ videoDuration);
                 initializeSeekBar();
             }
@@ -148,7 +152,7 @@ public class VideoActivity extends AppCompatActivity {
             }
         });
 
-        playButton = (Button) findViewById(R.id.play);
+        playButton = (Button) view.findViewById(R.id.play);
         playButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -165,6 +169,7 @@ public class VideoActivity extends AppCompatActivity {
             }
         });
 
+        return view;
     }
 
     @Override
@@ -208,12 +213,6 @@ public class VideoActivity extends AppCompatActivity {
     public void hideVideo(){
         vv.setVisibility(View.GONE);
         mainImage.setVisibility(View.VISIBLE);
-    }
-
-    @Override
-    public void onBackPressed(){
-        hideVideo();
-        super.onBackPressed();
     }
 
 

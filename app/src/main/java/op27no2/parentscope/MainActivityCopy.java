@@ -110,7 +110,7 @@ public class MainActivityCopy extends AppCompatActivity {
             }
         });
 
-        Button bt = (Button)findViewById(R.id.btxfr);
+/*        Button bt = (Button)findViewById(R.id.btxfr);
         bt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -119,7 +119,7 @@ public class MainActivityCopy extends AppCompatActivity {
                 btintent = new Intent(MainActivityCopy.this, AdminActivity.class);
                 startActivity(btintent);
             }
-        });
+        });*/
 
         boolean granted = false;
         AppOpsManager appOps = (AppOpsManager) this

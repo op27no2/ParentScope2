@@ -16,45 +16,35 @@ import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.MediaRecorder;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
-import android.net.Uri;
 import android.os.Binder;
 import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
-import android.os.StrictMode;
 import android.os.SystemClock;
-import android.provider.MediaStore;
 import android.support.v4.app.NotificationCompat;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.Display;
-import android.view.View;
 import android.view.WindowManager;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.Spinner;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -95,7 +85,19 @@ public class MyService extends Service {
     private Boolean isSending = false;
     //from zMainACtivity
     private ProgressDialog progressDialog;
+    private SharedPreferences prefs;
+    SharedPreferences.Editor edt;
 
+    private ArrayList<String> filePaths = new ArrayList<String>();
+    private int filesToSend = 0;
+    private Boolean sendingMultiple = false;
+
+    private int dayCount = 0;
+    private int maxCount;
+    private int dayStored;
+    private int totalStored;
+    private int frequency;
+    private int duration;
 
     public MyService() {
     }
@@ -110,6 +112,7 @@ public class MyService extends Service {
             // Return this instance of MyService so clients can call public methods
             return MyService.this;
         }
+
     }
     public void setCallbacks(ServiceInterface callbacks) {
         serviceCallbacks = callbacks;
@@ -120,6 +123,27 @@ public class MyService extends Service {
     @Override
     public void onCreate() {
         System.out.println("ParentScope service onCreate");
+        prefs = MyApplication.getAppContext().getSharedPreferences(
+                "PREFS", Context.MODE_PRIVATE);
+        edt = prefs.edit();
+        populateList();
+
+        dayCount = prefs.getInt("stored_today",0);
+        maxCount = prefs.getInt("stored_total",0);
+        dayStored = prefs.getInt("stored_setting",0);
+        totalStored = prefs.getInt("total_setting",0);
+        frequency = prefs.getInt("req_setting",100);
+        duration = prefs.getInt("duration_setting",10);
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        String date = sdf.format(System.currentTimeMillis());
+        if(!date.equals(prefs.getString("last_day",""))){
+            dayCount = 0;
+        }
+        edt.putString("last_day", date);
+        edt.commit();
+
+
         if (Build.VERSION.SDK_INT >= 26) {
             String CHANNEL_ID = "my_channel_01";
             NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
@@ -227,65 +251,93 @@ public class MyService extends Service {
 
         //From AdminActivity
 
+
         //THE SENDING DEVICE DEVICE
         MyApplication.clientHandler = new Handler() {
             @Override
             public void handleMessage(Message message) {
                 switch (message.what) {
                     case zMessageType.READY_FOR_DATA: {
-                        System.out.println("HANDLER READY FOR DATA");
-
-                        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                        File file = new File(Environment.getExternalStorageDirectory(), MyApplication.TEMP_IMAGE_FILE_NAME);
-                        Uri outputFileUri = Uri.fromFile(file);
-                        takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);
-                        StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
-                        StrictMode.setVmPolicy(builder.build());
-                        //   startActivityForResult(takePictureIntent, MyApplication.PICTURE_RESULT_CODE);
-                        break;
-                    }
-
-                    case zMessageType.COULD_NOT_CONNECT: {
-                        System.out.println("HANDLER COULD NOT CONNECT");
-                        Toast.makeText(MyApplication.getAppContext(), "Could not connect to the paired device", Toast.LENGTH_SHORT).show();
-                        break;
-                    }
-
-                    case zMessageType.SENDING_DATA: {
-                        System.out.println("HANDLER SENDING DATA");
-
-                        progressDialog = new ProgressDialog(MyApplication.getAppContext());
-                        progressDialog.setMessage("Sending photo...");
-                        progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-                        //cant show progress dialog in service
-//                        progressDialog.show();
-                        break;
-                    }
-
-                    case zMessageType.RECEIVED_CONNECTION: {
-                       // System.out.println("RECEIVED CONNECTION!");
-
-                        break;
-                    }
-
-
-                    case zMessageType.DATA_SENT_OK: {
-                        System.out.println("HANDLER DATA SENT OK");
-
                         if (progressDialog != null) {
                             progressDialog.dismiss();
                             progressDialog = null;
                         }
-                        Toast.makeText(MyApplication.getAppContext(), "Photo was sent successfully", Toast.LENGTH_SHORT).show();
+                        System.out.println("client/sender ready for data");
+
+                   /*     Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                        File file = new File(Environment.getExternalStorageDirectory(), MyApplication.TEMP_IMAGE_FILE_NAME);
+                        Uri outputFileUri = Uri.fromFile(file);
+                        takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);
+                        StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
+                        StrictMode.setVmPolicy(builder.build());*/
+                        //                  startActivityForResult(takePictureIntent, MyApplication.PICTURE_RESULT_CODE);
+                        break;
+                    }
+
+                    case zMessageType.COULD_NOT_CONNECT: {
+                        Toast.makeText(getApplicationContext(), "Could not connect to the paired device", Toast.LENGTH_SHORT).show();
+                        break;
+                    }
+
+                    case zMessageType.SENDING_DATA: {
+                        progressDialog = new ProgressDialog(getApplicationContext());
+                        progressDialog.setMessage("Receiving Data... This May Take Several Minutes");
+                        progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+//                        progressDialog.show();
+                        break;
+                    }
+
+                    case zMessageType.DATA_SENT_OK: {
+                        if (progressDialog != null) {
+                            progressDialog.dismiss();
+                            progressDialog = null;
+                        }
+                        // Toast.makeText(getActivity(), "Photo was sent successfully", Toast.LENGTH_SHORT).show();
+                        System.out.println("Photo was sent successfully");
+                        filesToSend = filesToSend - 1;
+                        if(sendingMultiple && filesToSend>0) {
+                            System.out.println("Sending More: "+filesToSend);
+                            sendFile();
+                        }
                         break;
                     }
 
                     case zMessageType.DIGEST_DID_NOT_MATCH: {
-                        System.out.println("HANDLER DIGEST DID NOT MATCH");
-
-                        Toast.makeText(MyApplication.getAppContext(), "Photo was sent, but didn't go through correctly", Toast.LENGTH_SHORT).show();
+                        if (progressDialog != null) {
+                            progressDialog.dismiss();
+                            progressDialog = null;
+                        }
+                        Toast.makeText(getApplicationContext(), "Photo was sent, but didn't go through correctly", Toast.LENGTH_SHORT).show();
                         break;
                     }
+                    case zMessageType.PHOTO: {
+                        if (progressDialog != null) {
+                            progressDialog.dismiss();
+                            progressDialog = null;
+                        }
+
+                        break;
+                    }
+                    case zMessageType.REQUEST: {
+                        if (progressDialog != null) {
+                            progressDialog.dismiss();
+                            progressDialog = null;
+                        }
+
+                        System.out.println("SIMPLE MESSAGE TEST");
+
+                        byte[] myBytes = "Test String".getBytes();
+
+                        // Invoke client thread to send
+                        Message mMessage = new Message();
+                        mMessage.obj = myBytes;
+                        MyApplication.clientThread.incomingHandler.sendMessage(mMessage);
+
+
+
+                        break;
+                    }
+
                 }
             }
         };
@@ -296,58 +348,95 @@ public class MyService extends Service {
             public void handleMessage(Message message) {
                 switch (message.what) {
                     case zMessageType.DATA_RECEIVED: {
-                        if (progressDialog != null) {
-                            progressDialog.dismiss();
-                            progressDialog = null;
+                        byte[] myBytes = ((byte[]) message.obj);
+                        if(myBytes.length < 100) {
+                            if (prefs.getString("type", "").equals("monitored")) {
+
+                            String s = new String(myBytes);
+                            System.out.println("data received "+s);
+                            if(s.equals("Test String")) {
+                                populateList();
+
+                                if (progressDialog != null) {
+                                    progressDialog.dismiss();
+                                    progressDialog = null;
+                                }
+                                if (filesToSend > 1) {
+                                    sendingMultiple = true;
+                                }
+                                if(filesToSend>0) {
+                                    sendFile();
+                                }
+                                System.out.println("SHOULD SEND FILES "+filesToSend);
+                            }
                         }
 
-                        try (FileOutputStream stream = new FileOutputStream(getFilePath())) {
-                            stream.write(((byte[]) message.obj));
-                            //SUCCESSFUL TESTING DIDN"T USE CLOSE. NOT TESTED FOR LARGE FILES.
-                            stream.close();
-                        } catch (FileNotFoundException e) {
-                            System.out.println("ERROR filenotfound "+e.getMessage());
-                            e.printStackTrace();
-                        } catch (IOException e) {
-                            System.out.println("IO ERROR "+e.getMessage());
-                            e.printStackTrace();
+
+                        }else {
+                            //service should not be receiving the large files.
+                  /*          if (prefs.getString("type", "").equals("admin")) {
+                                System.out.println("data received, byte length >100 ");
+
+
+                                if (progressDialog != null) {
+                                    progressDialog.dismiss();
+                                    progressDialog = null;
+                                }
+
+                                try (FileOutputStream stream = new FileOutputStream(getFilePath())) {
+                                    stream.write(((byte[]) message.obj));
+                                    stream.close();
+                                } catch (FileNotFoundException e) {
+                                    System.out.println("ERROR filenotfound " + e.getMessage());
+                                    e.printStackTrace();
+                                } catch (IOException e) {
+                                    System.out.println("IO ERROR " + e.getMessage());
+                                    e.printStackTrace();
+                                }
+
+                                break;
+                            }*/
                         }
-
-                        BitmapFactory.Options options = new BitmapFactory.Options();
-                        options.inSampleSize = 2;
-                        Bitmap image = BitmapFactory.decodeByteArray(((byte[]) message.obj), 0, ((byte[]) message.obj).length, options);
-
-
-                        break;
                     }
 
                     case zMessageType.DIGEST_DID_NOT_MATCH: {
-                        Toast.makeText(MyApplication.getAppContext(), "Photo was received, but didn't come through correctly", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getApplicationContext(), "Photo was received, but didn't come through correctly", Toast.LENGTH_SHORT).show();
                         break;
                     }
 
                     case zMessageType.DATA_PROGRESS_UPDATE: {
                         // some kind of update
-                       // double pctRemaining = 100 - (((double) MyApplication.progressData.remainingSize / MyApplication.progressData.totalSize) * 100);
-                  /*      if (progressDialog == null) {
-                            progressDialog = new ProgressDialog(MyApplication.getAppContext());
+                        double pctRemaining = 100 - (((double) MyApplication.progressData.remainingSize / MyApplication.progressData.totalSize) * 100);
+                        if (progressDialog == null) {
+                            progressDialog = new ProgressDialog(getApplicationContext());
                             progressDialog.setMessage("Receiving photo...");
                             progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
                             progressDialog.setProgress(0);
                             progressDialog.setMax(100);
-                            progressDialog.show();
-                        }*/
-                        //progressDialog.setProgress((int) Math.floor(pctRemaining));
+//                            progressDialog.show();
+                        }
+                        System.out.println("percent remaining "+pctRemaining);
+
+                        progressDialog.setProgress((int) Math.floor(pctRemaining));
                         break;
                     }
 
                     case zMessageType.INVALID_HEADER: {
-                        Toast.makeText(MyApplication.getAppContext(), "Photo was sent, but the header was formatted incorrectly", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getApplicationContext(), "Photo was sent, but the header was formatted incorrectly", Toast.LENGTH_SHORT).show();
+                        break;
+                    }
+
+
+                    case zMessageType.RECEIVED_CONNECTION: {
+                        System.out.println("MAIN ACTIVITY MESSAGE TEST");
+
+
                         break;
                     }
                 }
             }
         };
+
 
         if (MyApplication.pairedDevices != null) {
             if (MyApplication.serverThread == null) {
@@ -388,9 +477,24 @@ public class MyService extends Service {
         }
 
         Log.e("adapter", "Current App in foreground is: " + currentApp);
+        System.out.println(isRecording.toString() + dayCount+ dayStored + maxCount + totalStored+frequency);
+        //TESTING SCREEN RECORD WITH snapchat open
+        if(currentApp.equals("com.snapchat.android") && isRecording==false && (dayCount <= dayStored) && (maxCount <= totalStored) && (getRandomNumber(0,100) <= frequency)){
+            dayCount = dayCount + 1;
+            maxCount = maxCount + 1;
+            edt.putInt("stored_today",dayCount);
+            edt.putInt("stored_total",maxCount);
+            edt.commit();
 
-        //TESTING SCREEN RECORD WITH FACEBOOK OPEN
-        if(currentApp.equals("com.facebook.katana") && isRecording==false){
+            //everytime we capture get current date, if its not the same as last capture or service start, reset max per day
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+            String date = sdf.format(System.currentTimeMillis());
+            if(!date.equals(prefs.getString("last_day",""))){
+                dayCount = 0;
+            }
+            edt.putString("last_day", date);
+            edt.commit();
+
             isRecording = true;
             System.out.println("Launching Record Activity");
             mMediaProjection = MyApplication.mMediaProjection;
@@ -417,6 +521,8 @@ public class MyService extends Service {
                 System.out.println("START RECORD");
             }
 
+
+
             final Handler handler = new Handler();
             handler.postDelayed(new Runnable() {
                 @Override
@@ -430,7 +536,7 @@ public class MyService extends Service {
         }
 
         //TESTING FILE TRANSFER WITH ISNTAGRAM OPEN
-        if(currentApp.equals("com.instagram.android")&&isSending==false) {
+/*        if(currentApp.equals("com.instagram.android")&&isSending==false) {
             isSending = true;
 
             final SharedPreferences prefs = MyApplication.getAppContext().getSharedPreferences(
@@ -488,10 +594,7 @@ public class MyService extends Service {
                 Toast.makeText(this, "Bluetooth is not enabled or supported on this device", Toast.LENGTH_LONG).show();
                 System.out.println("Bluetooth is not enabled or supported on this device");
             }
-
-
-
-        }
+        }*/
 
 
         return currentApp;
@@ -561,11 +664,11 @@ public class MyService extends Service {
 
 
     public void startRecord() {
+        System.out.println("start record");
 
         mMediaProjection.registerCallback(mMediaProjectionCallback, null);
         mVirtualDisplay = createVirtualDisplay();
         mMediaRecorder.start();
-        System.out.println("service started");
 
     }
 
@@ -608,6 +711,7 @@ public class MyService extends Service {
     }
 
     private void prepareRecorder() {
+        System.out.println("Prepare recorder");
         try {
             mMediaRecorder.prepare();
         } catch (IllegalStateException | IOException e) {
@@ -617,7 +721,14 @@ public class MyService extends Service {
 
 
     public String getFilePath() {
-        final String directory = Environment.getExternalStorageDirectory() + File.separator + "ParentScope";
+      // final String directory = Environment.getExternalStorageDirectory() + File.separator + "ParentScope";
+
+        //this is where the files will be saved after recording. The code in the sending section in this service must match this location
+
+        //the code in getFile in AdminActivity on the receiving device can place the files anywhere,but populate list in the AdminActivity must look there.
+
+        final String directory = Environment.getExternalStorageDirectory() + File.separator + "Systex";
+
         if (!Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
             Toast.makeText(this, "Failed to get External Storage", Toast.LENGTH_SHORT).show();
             return null;
@@ -663,9 +774,38 @@ public class MyService extends Service {
             mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
             mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
             mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
-            mMediaRecorder.setVideoEncodingBitRate(3000000);
-            mMediaRecorder.setCaptureRate(20);
-            mMediaRecorder.setVideoFrameRate(20);
+            int qMode = prefs.getInt("quality_setting",0);
+            switch(qMode){
+                case 0:
+                    mMediaRecorder.setVideoEncodingBitRate(3000000);
+                    mMediaRecorder.setCaptureRate(20);
+                    mMediaRecorder.setVideoFrameRate(20);
+                    break;
+
+                case 1:
+                    mMediaRecorder.setVideoEncodingBitRate(2000000);
+                    mMediaRecorder.setCaptureRate(10);
+                    mMediaRecorder.setVideoFrameRate(10);
+                    break;
+
+                case 2:
+                    mMediaRecorder.setVideoEncodingBitRate(1000000);
+                    mMediaRecorder.setCaptureRate(5);
+                    mMediaRecorder.setVideoFrameRate(5);
+                    break;
+
+                case 3:
+                    mMediaRecorder.setVideoEncodingBitRate(3000000);
+                    mMediaRecorder.setCaptureRate(1);
+                    mMediaRecorder.setVideoFrameRate(1);
+                    break;
+
+                default:
+                    mMediaRecorder.setVideoEncodingBitRate(3000000);
+                    mMediaRecorder.setCaptureRate(20);
+                    mMediaRecorder.setVideoFrameRate(20);
+            }
+
             mMediaRecorder.setVideoSize(DISPLAY_WIDTH, DISPLAY_HEIGHT);
             mMediaRecorder.setOutputFile(getFilePath());
         }
@@ -759,5 +899,104 @@ public class MyService extends Service {
         return bytes;
     }
 
+
+
+    public void populateList(){
+
+            final String directory = Environment.getExternalStorageDirectory() + File.separator + "Systex";
+            System.out.println("directory = "+directory);
+            File dir = new File(directory);
+            File[] filelist = dir.listFiles();
+
+            if (filelist != null) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    Arrays.sort(filelist, Comparator.comparingLong(File::lastModified));
+                }
+            }
+
+            String[] theNamesOfFiles = new String[0];
+            if (filelist != null) {
+                System.out.println("Number of Files: " + filelist.length);
+                theNamesOfFiles = new String[filelist.length];
+            }else{
+                System.out.println("null list of files");
+            }
+            filePaths.clear();
+
+
+        for (int i = 0; i < theNamesOfFiles.length; i++) {
+                //   theNamesOfFiles[i] = filelist[i].getName();
+                if (filelist[i].length() > 0) {
+                    filePaths.add(filelist[i].getAbsolutePath());
+                    System.out.println("Files: " + filePaths);
+                }
+            }
+
+            filesToSend = filePaths.size();
+    }
+
+    //TODO have to give monitored way to select paired device
+    //TODO have to make progress indicator
+    //TODO Long press delete still a thing?
+    //TODO file management
+
+    public void sendFile() {
+       // populateList();
+
+        final SharedPreferences prefs = MyApplication.getAppContext().getSharedPreferences(
+                "PREFS", Context.MODE_PRIVATE);
+        String deviceID = prefs.getString("bluetooth", "fail");
+        System.out.println("try to send file deviceID: " + deviceID);
+
+        if (MyApplication.pairedDevices != null) {
+            for (BluetoothDevice device : MyApplication.adapter.getBondedDevices()) {
+                if (device.getAddress().contains(deviceID)) {
+                    System.out.println("starting client thread");
+                    if (MyApplication.clientThread != null) {
+                        System.out.println("canceled client thread");
+                        MyApplication.clientThread.cancel();
+                    }
+                    MyApplication.clientThread = new zClientThread(device, MyApplication.clientHandler, "photo", filesToSend);
+                    MyApplication.clientThread.start();
+                }
+            }
+            //Have to call delayed so client thread has a chance to start
+            final Handler handler = new Handler();
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    System.out.println("DELAYED FILE TRANSFER TEST "+filePaths);
+
+                    if(filePaths.size()>0) {
+                        String videopath = filePaths.get(filePaths.size() - filesToSend);
+                        System.out.println("filepath: " + videopath);
+                        byte[] myBytes = new byte[0];
+                        try {
+                            myBytes = fullyReadFileToBytes(videopath);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            System.out.println("service io exception: " + e.getMessage());
+                        }
+
+                        // Invoke client thread to send
+                        Message message = new Message();
+                        message.obj = myBytes;
+                        // System.out.println("handlertest: " + MyApplication.clientThread.incomingHandler.toString());
+                        MyApplication.clientThread.incomingHandler.sendMessage(message);
+                    }
+                }
+            }, 3000);
+
+
+        } else {
+
+            System.out.println("Bluetooth is not enabled or supported on this device");
+        }
+    }
+
+
+    private int getRandomNumber(int min,int max) {
+        return (new Random()).nextInt((max - min) + 1) + min;
+    }
 
 }

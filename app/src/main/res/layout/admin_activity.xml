@@ -1,35 +1,99 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
+    android:background="@color/lightGray"
     >
+
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" android:layout_gravity="center">
+        android:layout_height="wrap_content" android:layout_gravity="center_vertical">
+        <TextView
+            android:id="@+id/textView1"
+            android:gravity="center_vertical"
+            android:layout_marginLeft="10dp"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:textSize="12sp"
+            android:text="Target Device:" />
+
         <Spinner
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:gravity="center_vertical"
             android:id="@+id/deviceSpinner" android:layout_gravity="center"
             android:spinnerMode="dialog"/>
-        <Button
+<!--        <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Send Photo"
             android:id="@+id/clientButton"
             style="@style/Widget.AppCompat.Button.Colored"
-            android:layout_gravity="center"/>
+            android:layout_gravity="center"/>-->
 
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Pull Photo"
+            android:gravity="center_vertical"
+            android:text="Retrieve Files"
             android:id="@+id/pullButton"
             style="@style/Widget.AppCompat.Button.Colored"
             android:layout_gravity="center"/>
 
     </LinearLayout>
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/colorPrimary"/>
+    <LinearLayout
+        android:visibility="gone"
+        android:id="@+id/progress_view"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/progress_text"
+            android:paddingTop="10dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginLeft="10dp"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:textSize="12sp"
+            android:text="Retrieving Files:" />
+
+        <com.daimajia.numberprogressbar.NumberProgressBar
+            android:id="@+id/progress_bar"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp"
+
+            custom:progress_unreached_color="#CCCCCC"
+            custom:progress_reached_color="@color/colorAccent"
+
+            custom:progress_unreached_bar_height="0.75dp"
+            custom:progress_reached_bar_height="1.5dp"
+
+            custom:progress_text_size="10sp"
+            custom:progress_text_color="@color/colorPrimaryDark"
+            custom:progress_text_offset="1dp"
+            custom:progress_text_visibility="visible"
+
+            custom:progress_max="100"
+            custom:progress_current="0"
+            />
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/colorPrimary"/>
+    </LinearLayout>
+
+
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/my_recycler_view"
@@ -41,4 +105,5 @@
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:id="@+id/imageView" android:layout_gravity="center_vertical|left"/>
+
 </LinearLayout>

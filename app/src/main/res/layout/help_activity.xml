@@ -4,19 +4,17 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:padding = "10dp"
     tools:context=".MonitoredActivity">
 
-
     <TextView
-        android:id="@+id/textView"
-        android:layout_centerHorizontal="true"
+        android:layout_margin="5dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Select User Type for This Device" />
+        android:textSize="18sp"
+        android:text="Help/Feedback Portal Coming Soon" />
 
-
-
-    <Button
+<!--    <Button
         android:id="@+id/admin"
         android:layout_below="@+id/textView"
         android:layout_width="wrap_content"
@@ -25,7 +23,7 @@
         android:layout_centerHorizontal="true"
         style="@style/Widget.AppCompat.Button.Colored"
         android:text="Administrator"
-        />
+        />-->
 
 
 
