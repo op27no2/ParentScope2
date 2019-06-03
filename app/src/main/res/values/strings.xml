@@ -24,8 +24,11 @@
     <!-- Options Menu -->
     <string name="Instructions1"> On First installation, press the "start service" button below to begin monitoring
         (this will start automatically on-boot in the future). \n\nA pop-up message will request permission to screen capture - grant permission and check "do not show again."
-        The "start service" button can be used at any time if it has stopped due to errors or other reasons. \n\nBe sure to enable the permissions for "Record Audio" and "Usage Access" requested during install. Make sure this device is paired
+        The "start service" button can be used at any time if it has stopped due to errors or other reasons. \n\nBe sure to enable the permissions for "Record Audio" "write external storage" and "Usage Access" requested during install. Make sure this device is paired
         with the administrator phone to allow for future data transfer. </string>
+
+    <string name="Introduction">Welcome to Heron Parental Monitoring! \n\nPlease select the user type below. The admin device will receive screen capture video from one or more monitored devices. Settings for video quality can be adjusted on the monitored phone. Audio recording may be enabled with caution depending on regulations in your location. \n\nPlease be sure to pair target devices. \n\nPlease enable necessary permissions as prompted. </string>
+
 
     <string name="Instructions2"> It is best to obtain concurrence from the monitored user. Alternatively, you will need to enforce bluetooth pairing through disbling access to settings </string>
     <string name="Instructions3"> Currently, Android does not allow any app to prevent the user from uninstalling it through safe mode. Scoped will alert you if it appears the companion app has not run in the last 24 hours. </string>

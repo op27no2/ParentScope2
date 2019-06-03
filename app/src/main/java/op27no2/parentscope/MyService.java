@@ -43,8 +43,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -89,15 +91,25 @@ public class MyService extends Service {
     SharedPreferences.Editor edt;
 
     private ArrayList<String> filePaths = new ArrayList<String>();
+    private ArrayList<String> alreadySent = new ArrayList<String>();
     private int filesToSend = 0;
     private Boolean sendingMultiple = false;
 
+    private int qMode;
     private int dayCount = 0;
-    private int maxCount;
     private int dayStored;
+    private int totalCount;
     private int totalStored;
     private int frequency;
     private int duration;
+    private int duration_msec;
+    private boolean deleteafter;
+    private boolean recordmic;
+
+
+
+
+
 
     public MyService() {
     }
@@ -128,12 +140,45 @@ public class MyService extends Service {
         edt = prefs.edit();
         populateList();
 
+        qMode = prefs.getInt("quality_setting",0);
         dayCount = prefs.getInt("stored_today",0);
-        maxCount = prefs.getInt("stored_total",0);
+        totalCount = prefs.getInt("stored_total",0);
         dayStored = prefs.getInt("stored_setting",0);
         totalStored = prefs.getInt("total_setting",0);
         frequency = prefs.getInt("req_setting",100);
-        duration = prefs.getInt("duration_setting",10);
+        duration = prefs.getInt("duration_setting",6);
+        switch(duration){
+            case 0:
+                duration_msec = 300000;
+                break;
+            case 1:
+                duration_msec = 120000;
+                break;
+            case 2:
+                duration_msec = 60000;
+                break;
+            case 3:
+                duration_msec = 30000;
+                break;
+            case 4:
+                duration_msec = 15000;
+                break;
+            case 5:
+                duration_msec = 10000;
+                break;
+            case 6:
+                duration_msec = 5000;
+                break;
+            default:
+                duration_msec = 5000;
+
+        }
+
+        duration = prefs.getInt("duration_setting",7);
+        deleteafter = prefs.getBoolean("delete_setting",false);
+        recordmic = prefs.getBoolean("mic_setting",false);
+
+
 
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
         String date = sdf.format(System.currentTimeMillis());
@@ -294,6 +339,19 @@ public class MyService extends Service {
                         }
                         // Toast.makeText(getActivity(), "Photo was sent successfully", Toast.LENGTH_SHORT).show();
                         System.out.println("Photo was sent successfully");
+
+                        //delete or track if has been deleted
+                        if(prefs.getBoolean("delete_setting",false)) {
+                            deleteFiles(filePaths.get(filePaths.size() - filesToSend));
+                        }else{
+                            Set<String> set = prefs.getStringSet("already_sent", null);
+                            String path = filePaths.get(filePaths.size() - filesToSend);
+                            //get filename from path
+                            set.add(path.substring(path.lastIndexOf(File.separator)+1));
+                            edt.putStringSet("already_sent", set);
+                            edt.commit();
+                        }
+
                         filesToSend = filesToSend - 1;
                         if(sendingMultiple && filesToSend>0) {
                             System.out.println("Sending More: "+filesToSend);
@@ -477,14 +535,15 @@ public class MyService extends Service {
         }
 
         Log.e("adapter", "Current App in foreground is: " + currentApp);
-        System.out.println(isRecording.toString() + dayCount+ dayStored + maxCount + totalStored+frequency);
+        System.out.println(isRecording.toString() +" "+ dayCount+" "+ dayStored +" "+ totalCount +" "+ totalStored+" "+frequency);
         //TESTING SCREEN RECORD WITH snapchat open
-        if(currentApp.equals("com.snapchat.android") && isRecording==false && (dayCount <= dayStored) && (maxCount <= totalStored) && (getRandomNumber(0,100) <= frequency)){
+        if(currentApp.equals("com.snapchat.android") && isRecording==false && (dayCount <= dayStored) && (totalCount <= totalStored) && (getRandomNumber(0,100) <= frequency)){
             dayCount = dayCount + 1;
-            maxCount = maxCount + 1;
+            totalCount = totalCount + 1;
             edt.putInt("stored_today",dayCount);
-            edt.putInt("stored_total",maxCount);
+            edt.putInt("stored_total",totalCount);
             edt.commit();
+
 
             //everytime we capture get current date, if its not the same as last capture or service start, reset max per day
             SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
@@ -531,7 +590,7 @@ public class MyService extends Service {
                     System.out.println("STAHP RECORD");
 
                 }
-            }, 6000);
+            }, duration_msec);
 
         }
 
@@ -769,12 +828,13 @@ public class MyService extends Service {
             System.out.println("recorder init");
 
             mMediaRecorder = new MediaRecorder();
-            mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+            if(recordmic) {
+                mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+                mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+            }
             mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
             mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
             mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
-            mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
-            int qMode = prefs.getInt("quality_setting",0);
             switch(qMode){
                 case 0:
                     mMediaRecorder.setVideoEncodingBitRate(3000000);
@@ -921,14 +981,20 @@ public class MyService extends Service {
             }else{
                 System.out.println("null list of files");
             }
-            filePaths.clear();
+
+        Set<String> set = prefs.getStringSet("already_sent", null);
+        filePaths.clear();
 
 
         for (int i = 0; i < theNamesOfFiles.length; i++) {
                 //   theNamesOfFiles[i] = filelist[i].getName();
                 if (filelist[i].length() > 0) {
-                    filePaths.add(filelist[i].getAbsolutePath());
-                    System.out.println("Files: " + filePaths);
+
+                    //check if we have already sent the file, if not, add to filePaths that are sendable
+                    if(set!=null && !set.contains(filelist[i].getName())) {
+                        filePaths.add(filelist[i].getAbsolutePath());
+                        System.out.println("Files: " + filePaths);
+                    }
                 }
             }
 
@@ -997,6 +1063,12 @@ public class MyService extends Service {
 
     private int getRandomNumber(int min,int max) {
         return (new Random()).nextInt((max - min) + 1) + min;
+    }
+
+    public void deleteFiles(String filepath){
+        File file = new File(filepath);
+        boolean deleted = file.delete();
+        System.out.println("file deleted "+deleted+" " + filepath);
     }
 
 }

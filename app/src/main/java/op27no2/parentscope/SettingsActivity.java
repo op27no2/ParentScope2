@@ -104,10 +104,6 @@ public class SettingsActivity extends Fragment {
 
         ArrayList<String> mItems3 = new ArrayList<String>();
         mItems3.add("No Limit");
-        mItems3.add("100");
-        mItems3.add("50");
-        mItems3.add("40");
-        mItems3.add("30");
         mItems3.add("20");
         mItems3.add("10");
         mItems3.add("5");
@@ -131,8 +127,6 @@ public class SettingsActivity extends Fragment {
 
         ArrayList<String> mItems4 = new ArrayList<String>();
         mItems4.add("No Limit");
-        mItems4.add("500");
-        mItems4.add("200");
         mItems4.add("100");
         mItems4.add("50");
         mItems4.add("40");
@@ -182,13 +176,13 @@ public class SettingsActivity extends Fragment {
         });
 
         ArrayList<String> mItems6 = new ArrayList<String>();
-        mItems6.add("All Events");
-        mItems6.add("50%");
-        mItems6.add("25%");
-        mItems6.add("15%");
-        mItems6.add("10%");
-        mItems6.add("5%");
-        mItems6.add("1%");
+        mItems6.add("5 minutess");
+        mItems6.add("2 minutess");
+        mItems6.add("60 seconds");
+        mItems6.add("30 seconds");
+        mItems6.add("15 seconds%");
+        mItems6.add("10 seconds");
+        mItems6.add("5 seconds");
         ArrayAdapter<String> deviceArrayAdapter6 = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_spinner_item, mItems6);
         deviceArrayAdapter6.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         lengthSpinner.setAdapter(deviceArrayAdapter6);

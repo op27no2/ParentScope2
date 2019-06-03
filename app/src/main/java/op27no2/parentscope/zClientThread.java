@@ -3,11 +3,14 @@ package op27no2.parentscope;
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -107,6 +110,7 @@ public class zClientThread extends Thread {
                                     if (zUtils.digestMatch(payload, incomingDigest)) {
                                         Log.v(TAG, "Digest matched OK.  Data was received OK.");
                                         zClientThread.this.handler.sendEmptyMessage(zMessageType.DATA_SENT_OK);
+
                                     } else {
                                         Log.e(TAG, "Digest did not match.  Might want to resend.");
                                         zClientThread.this.handler.sendEmptyMessage(zMessageType.DIGEST_DID_NOT_MATCH);
@@ -150,6 +154,12 @@ public class zClientThread extends Thread {
         }
     }
 
+    public void deleteFiles(String filepath){
+
+        File file = new File(filepath);
+        boolean deleted = file.delete();
+        System.out.println("file deleted " +deleted+" "+ filepath);
+    }
 
 
 }

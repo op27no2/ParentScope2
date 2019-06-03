@@ -18,7 +18,7 @@
         android:textColor="@color/colorPrimary"
         android:textSize="26dp"
         android:clickable="true"
-        android:text="Upgrades:"/>
+        android:text="Subscriptions:"/>
 
     <View
         android:id="@+id/separator"

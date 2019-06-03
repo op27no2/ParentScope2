@@ -2,7 +2,6 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_margin="20dp"
     android:layout_width="match_parent"
     android:layout_height="300dp"
     android:background="#FFFFFF"
@@ -30,6 +29,7 @@
             android:textSize="24sp"
             android:textAlignment="center"
             android:text="Retrieve Files Settings:" />
+
         <LinearLayout
             android:id="@+id/cal1"
             android:layout_marginTop="20dp"
@@ -78,7 +78,7 @@
                 <TextView
                     android:id="@+id/caltext0"
                     android:layout_margin="5dp"
-                    android:layout_width="150dp"
+                    android:layout_width="160dp"
                     android:layout_height="wrap_content"
                     android:textSize="20sp"
                     android:text="File Limit \nPer Retrieval:" />
@@ -93,33 +93,74 @@
 
             </LinearLayout>
             <LinearLayout
-                android:layout_below="@+id/tv2"
+            android:layout_below="@+id/tv2"
+            android:orientation="horizontal"
+            android:layout_centerHorizontal="true"
+            android:gravity="center_vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+            <TextView
+                android:id="@+id/caltext1"
+                android:layout_margin="5dp"
+                android:layout_centerHorizontal="true"
+                android:layout_width="160dp"
+                android:layout_height="wrap_content"
+                android:textSize="20sp"
+                android:text="Date Range:" />
+
+            <Spinner
+                android:id="@+id/spin"
+                android:textSize="20sp"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content">
+
+            </Spinner>
+
+        </LinearLayout>
+        <LinearLayout
+                android:layout_below="@+id/checkbox1"
                 android:orientation="horizontal"
                 android:layout_centerHorizontal="true"
                 android:gravity="center_vertical"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content">
+            <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
                 <TextView
-                    android:id="@+id/caltext1"
+                    android:id="@+id/text1"
                     android:layout_margin="5dp"
                     android:layout_centerHorizontal="true"
+                    android:layout_width="160dp"
+                    android:layout_height="wrap_content"
+                    android:textSize="20sp"
+                    android:text="Reset Retrieval History" />
+                <TextView
+                    android:id="@+id/text2"
+                    android:layout_margin="5dp"
                     android:layout_width="150dp"
                     android:layout_height="wrap_content"
-                    android:textSize="20sp"
-                    android:text="Date Range:" />
-
-                <Spinner
-                    android:id="@+id/spin"
-                    android:textSize="20sp"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content">
-
-                </Spinner>
+                    android:textSize="12sp"
+                    android:text="(resets sent photo history on target phone, you will receive duplicates unless target set to delete after sending):" />
 
             </LinearLayout>
+                <com.kyleduo.switchbutton.SwitchButton
+                    android:id="@+id/reset_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:kswBackColor="@color/mediumGray"
+                    app:kswTintColor="@color/colorAccent"
+                    app:kswTextOn="On"
+                    app:kswTextOff="Off"
+                    app:kswTextExtra="14dp"
+                    tools:ignore="RtlHardcoded"/>
+
+        </LinearLayout>
+
             <LinearLayout
                 android:id="@+id/cal2"
-                android:layout_below="@+id/tv2"
+                android:layout_below="@+id/checkbox1"
                 android:orientation="horizontal"
                 android:layout_marginTop="20dp"
                 android:layout_gravity="center_horizontal"

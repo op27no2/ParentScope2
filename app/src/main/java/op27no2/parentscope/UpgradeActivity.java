@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
@@ -24,7 +25,6 @@ import android.widget.Toast;
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingClientStateListener;
 import com.android.billingclient.api.BillingFlowParams;
-import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.Purchase;
 import com.android.billingclient.api.PurchasesUpdatedListener;
 import com.android.billingclient.api.SkuDetails;
@@ -157,11 +157,14 @@ public class UpgradeActivity extends android.support.v4.app.Fragment implements 
         skuList.add("yearsub1");
 
 
-        mBillingClient = BillingClient.newBuilder(getActivity()).setListener(this).enablePendingPurchases().build();
+        mBillingClient = BillingClient.newBuilder(getActivity()).setListener(this).build();
+        //billing 2.0
+        //mBillingClient = BillingClient.newBuilder(getActivity()).setListener(this).enablePendingPurchases().build();
 
         mBillingClient.startConnection(new BillingClientStateListener() {
 
-            @Override
+            //billing 2.0
+          /*  @Override
             public void onBillingSetupFinished(BillingResult billingResult) {
                 if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
                     System.out.println("billing client ready");
@@ -172,6 +175,18 @@ public class UpgradeActivity extends android.support.v4.app.Fragment implements 
                          System.out.println("subs not supported? ");
                      }
                     priceList = getPrices(skuList);
+
+                }
+            }*/
+
+            @Override
+            public void onBillingSetupFinished(int responseCode) {
+                if (responseCode == BillingClient.BillingResponse.OK) {
+                    System.out.println("billing client ready");
+                    billingReady = true;
+
+                    priceList = getPrices(skuList);
+
 
                 }
             }
@@ -205,6 +220,28 @@ public class UpgradeActivity extends android.support.v4.app.Fragment implements 
         mBillingClient.querySkuDetailsAsync(params.build(),
                 new SkuDetailsResponseListener() {
                     @Override
+                    public void onSkuDetailsResponse(int responseCode, List<SkuDetails> skuDetailsList) {
+                        if (responseCode == BillingClient.BillingResponse.OK
+                                && skuDetailsList != null) {
+
+                            System.out.println("Price results: " + skuDetailsList);
+                            for (SkuDetails skuDetails : skuDetailsList) {
+                                String price = skuDetails.getPrice();
+                                String name = skuDetails.getSku();
+                                mPriceMap.put(name,price);
+                            }
+                            System.out.println("pricemap: "+mPriceMap);
+
+
+
+                        }else{
+                            System.out.println("billing response code not ok: "+responseCode);
+                            Toast.makeText(getActivity(), "Billing unavaialble, please check your internet connection", Toast.LENGTH_LONG).show();
+                        }
+                    }
+
+                    //Billing 2.0
+                   /* @Override
                     public void onSkuDetailsResponse(BillingResult billingResult, List<SkuDetails> skuDetailsList) {
                         if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK
                                 && skuDetailsList != null) {
@@ -226,7 +263,7 @@ public class UpgradeActivity extends android.support.v4.app.Fragment implements 
                             System.out.println("billing response code not ok: "+billingResult.getResponseCode());
                             Toast.makeText(getActivity(), "Billing unavaialble, please check your internet connection", Toast.LENGTH_LONG).show();
                         }
-                    }
+                    }*/
 
 
                 });
@@ -243,6 +280,31 @@ public class UpgradeActivity extends android.support.v4.app.Fragment implements 
         mBillingClient.querySkuDetailsAsync(params.build(),
                 new SkuDetailsResponseListener() {
                     @Override
+                    public void onSkuDetailsResponse(int responseCode, List<SkuDetails> skuDetailsList) {
+                        if (responseCode == BillingClient.BillingResponse.OK
+                                && skuDetailsList != null) {
+
+                            System.out.println("IAP results: " + skuDetailsList);
+                            for (SkuDetails skuDetails : skuDetailsList) {
+                                String sku = skuDetails.getSku();
+                                String name = skuDetails.getTitle();
+                                String price = skuDetails.getPrice();
+                                if (productSku.equals(sku)) {
+                                    String mPremiumUpgradePrice = price;
+                                    BillingFlowParams flowParams = BillingFlowParams.newBuilder()
+                                            .setSku(sku)
+                                            .setType(BillingClient.SkuType.INAPP)
+                                            .build();
+                                    int mresponseCode = mBillingClient.launchBillingFlow(mActivity, flowParams);
+                                    System.out.println("billing response code: " + mresponseCode);
+
+                                }
+                            }
+                        }
+                    }
+
+                    //billing 2.0
+          /*          @Override
                     public void onSkuDetailsResponse(BillingResult billingResult, List<SkuDetails> skuDetailsList) {
                         if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK
                                 && skuDetailsList != null) {
@@ -269,7 +331,7 @@ public class UpgradeActivity extends android.support.v4.app.Fragment implements 
                             System.out.println("no IAP returned: "+ billingResult);
                         }
                     }
-
+*/
 
                 });
 
@@ -277,7 +339,8 @@ public class UpgradeActivity extends android.support.v4.app.Fragment implements 
 
     }
 
-    @Override
+    //2.0 billing
+/*    @Override
     public void onPurchasesUpdated(BillingResult billingResult, List<Purchase> purchases) {
         System.out.println("purchase response: "+billingResult.getResponseCode());
 
@@ -294,7 +357,7 @@ public class UpgradeActivity extends android.support.v4.app.Fragment implements 
         }else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.ERROR) {
             System.out.println("purchase ERROR "+billingResult.getResponseCode());
         }
-    }
+    }*/
 
 
 
@@ -336,14 +399,18 @@ public class UpgradeActivity extends android.support.v4.app.Fragment implements 
         dialog.getWindow().setLayout((8 * width) / 9, LinearLayout.LayoutParams.WRAP_CONTENT);
 
         TextView mText = dialog.findViewById(R.id.title_text);
+        TextView mText2 = dialog.findViewById(R.id.detail_text);
         switch(position){
             case 0:
-            mText.setText(mData.get(position)+" - "+mPriceMap.get(mDataSku.get(position))+"\nStandard Subscription - provides full options for high quality recording to be used with unlimited monitored devices");
+            mText.setText(mData.get(position)+" - "+mPriceMap.get(mDataSku.get(position)));
+            mText2.setText("Standard Subscription - provides full options for high quality recording to be used with unlimited monitored devices");
 
                 break;
 
             case 1:
-            mText.setText(mData.get(position)+" - "+mPriceMap.get(mDataSku.get(position))+"\nYearly Discount Subscription - provides full options for high quality recording to be used with unlimited monitored devices at a discounted rate for a yearly subscription");
+            mText.setText(mData.get(position)+" - "+mPriceMap.get(mDataSku.get(position)));
+            mText2.setText("Yearly Discount Subscription - provides full options for high quality recording to be used with unlimited monitored devices at a discounted rate for a yearly subscription");
+
                 break;
         }
 
@@ -393,5 +460,23 @@ public class UpgradeActivity extends android.support.v4.app.Fragment implements 
     }
 
 
+    @Override
+    public void onPurchasesUpdated(int responseCode, @Nullable List<Purchase> purchases) {
+        System.out.println("purchase response: "+responseCode);
+        System.out.println("purchase updated");
+        if (responseCode == BillingClient.BillingResponse.OK
+                && purchases != null) {
+            System.out.println("purchase OK");
+            for (Purchase purchase : purchases) {
+                handlePurchase(purchase);
+            }
+        } else if (responseCode == BillingClient.BillingResponse.USER_CANCELED) {
+            System.out.println("purchase CANCELED");
+            // Handle an error caused by a user cancelling the purchase flow.
+        } else {
+            // Handle any other error codes.
+            System.out.println("purchase ERROR "+responseCode);
+        }
+    }
 
 }

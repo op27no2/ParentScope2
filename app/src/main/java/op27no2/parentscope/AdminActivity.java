@@ -26,15 +26,18 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.DatePicker;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.daimajia.numberprogressbar.NumberProgressBar;
 import com.daimajia.numberprogressbar.OnProgressBarListener;
+import com.kyleduo.switchbutton.SwitchButton;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -828,6 +831,7 @@ public class AdminActivity extends Fragment implements ClickListener, OnProgress
         Button dismissButton = (Button) dialogView.findViewById(R.id.dialog_button3);
         TextView tv2 = (TextView) dialogView.findViewById(R.id.caltext2);
         TextView tv3 = (TextView) dialogView.findViewById(R.id.caltext3);
+        SwitchButton mSwitch = dialogView.findViewById(R.id.reset_button);
      //   btnAdd2.setVisibility(View.GONE);
         mCal.setVisibility(View.VISIBLE);
 //        mNorm.setVisibility(View.GONE);
@@ -900,6 +904,15 @@ public class AdminActivity extends Fragment implements ClickListener, OnProgress
 
             public void onNothingSelected(AdapterView<?> adapterView) {
                 return;
+            }
+        });
+
+        mSwitch.setChecked(prefs.getBoolean("reset_setting",false));
+        mSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                edt.putBoolean("reset_setting",b);
+                edt.commit();
             }
         });
 
