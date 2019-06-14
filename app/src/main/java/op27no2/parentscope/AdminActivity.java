@@ -911,7 +911,7 @@ public class AdminActivity extends Fragment implements ClickListener, OnProgress
         mSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                edt.putBoolean("reset_setting",b);
+                edt.putBoolean("mic_setting",b);
                 edt.commit();
             }
         });
@@ -993,7 +993,7 @@ public class AdminActivity extends Fragment implements ClickListener, OnProgress
 
     public void populateList(){
 
-        if(deviceSpinner.getAdapter().getCount()>0) {
+        if(deviceSpinner.getAdapter() != null && deviceSpinner.getAdapter().getCount()>0) {
            // final String directory = Environment.getExternalStorageDirectory() + File.separator + "ParentScope";
             final String directory = Environment.getExternalStorageDirectory() + File.separator + "Systex"+prefs.getString("identifier","default");
             System.out.println("admin list directory: "+directory);

@@ -9,6 +9,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
@@ -29,15 +30,19 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import com.daimajia.numberprogressbar.NumberProgressBar;
+
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -72,7 +77,8 @@ public class MonitoredActivity extends Fragment {
     public static final String TOAST = "toast";
 
     private Spinner deviceSpinner;
-
+    private SharedPreferences prefs;
+    private SharedPreferences.Editor edt;
 
 
 
@@ -80,6 +86,9 @@ public class MonitoredActivity extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         View view = inflater.inflate(R.layout.monitored_activity, container, false);
+        prefs = MyApplication.getAppContext().getSharedPreferences(
+                "PREFS", Context.MODE_PRIVATE);
+        edt = prefs.edit();
 
         DisplayMetrics metrics = new DisplayMetrics();
         getActivity().getWindowManager().getDefaultDisplay().getMetrics(metrics);
@@ -89,6 +98,37 @@ public class MonitoredActivity extends Fragment {
         ((AppCompatActivity) getActivity()).getSupportActionBar().show();
 
         deviceSpinner = (Spinner) view.findViewById(R.id.deviceSpinner);
+        if (MyApplication.pairedDevices != null) {
+            final ArrayList<DeviceData> deviceDataList = new ArrayList<DeviceData>();
+            for (BluetoothDevice device : MyApplication.pairedDevices) {
+                deviceDataList.add(new DeviceData(device.getName(), device.getAddress()));
+            }
+
+            ArrayAdapter<DeviceData> deviceArrayAdapter = new ArrayAdapter<DeviceData>(getActivity(), android.R.layout.simple_spinner_item, deviceDataList);
+            deviceArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            deviceSpinner.setAdapter(deviceArrayAdapter);
+
+            deviceSpinner.setSelection(prefs.getInt("bluetooth_num",0));
+            deviceSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                    // Your code here
+                    SharedPreferences prefs = MyApplication.getAppContext().getSharedPreferences(
+                            "PREFS", Context.MODE_PRIVATE);
+                    SharedPreferences.Editor editor = prefs.edit();
+                    editor.putString("bluetooth",deviceDataList.get(i).getValue());
+                    editor.putInt("bluetooth_num",i);
+                    editor.putString("identifier",deviceDataList.get(i).toString());
+                    editor.commit();
+                }
+
+                public void onNothingSelected(AdapterView<?> adapterView) {
+                    return;
+                }
+            });
+        } else {
+            Toast.makeText(getActivity(), "Bluetooth is not enabled or supported on this device", Toast.LENGTH_LONG).show();
+        }
+
 
 
         System.out.println("start test");
@@ -493,6 +533,24 @@ public class MonitoredActivity extends Fragment {
     @TargetApi(Build.VERSION_CODES.HONEYCOMB) private final void setStatus(CharSequence subTitle) {
       //  final ActionBar actionBar = getActionBar();
 //        actionBar.setSubtitle(subTitle);
+    }
+
+    class DeviceData {
+        public DeviceData(String spinnerText, String value) {
+            this.spinnerText = spinnerText;
+            this.value = value;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        public String toString() {
+            return spinnerText;
+        }
+
+        String spinnerText;
+        String value;
     }
 
 }

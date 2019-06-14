@@ -19,19 +19,21 @@
         android:layout_marginBottom="5dp"
         android:layout_centerHorizontal="true"
         android:gravity="center_vertical"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content">
         <TextView
             android:id="@+id/quality_mode"
             android:layout_margin="5dp"
             android:layout_centerHorizontal="true"
-            android:layout_width="250dp"
+            android:layout_weight="3"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:textSize="18sp"
             android:text="Video Quality" />
 
         <Spinner
-            android:layout_width="wrap_content"
+            android:layout_weight="2"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:id="@+id/quality_spinner"
@@ -45,19 +47,21 @@
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="5dp"
         android:gravity="center_vertical"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content">
         <TextView
             android:id="@+id/daily_stored"
             android:layout_margin="5dp"
             android:layout_centerHorizontal="true"
-            android:layout_width="250dp"
+            android:layout_weight="3"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:textSize="18sp"
             android:text="Max Stored Per Day" />
 
         <Spinner
-            android:layout_width="wrap_content"
+            android:layout_weight="2"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:id="@+id/stored_spinner"
@@ -71,19 +75,21 @@
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="5dp"
         android:gravity="center_vertical"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content">
         <TextView
             android:id="@+id/total_stored"
             android:layout_margin="5dp"
             android:layout_centerHorizontal="true"
-            android:layout_width="250dp"
+            android:layout_weight="3"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:textSize="18sp"
             android:text="Max Stored Total" />
 
         <Spinner
-            android:layout_width="wrap_content"
+            android:layout_weight="2"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:id="@+id/total_spinner"
@@ -97,19 +103,21 @@
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="5dp"
         android:gravity="center_vertical"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content">
         <TextView
             android:id="@+id/freq_mode"
             android:layout_margin="5dp"
             android:layout_centerHorizontal="true"
-            android:layout_width="250dp"
+            android:layout_weight="3"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:textSize="18sp"
             android:text="Percentage of Events \nto Capture" />
 
         <Spinner
-            android:layout_width="wrap_content"
+            android:layout_weight="2"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:id="@+id/freq_spinner"
@@ -122,19 +130,21 @@
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="5dp"
         android:gravity="center_vertical"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content">
         <TextView
             android:id="@+id/length_mode"
             android:layout_margin="5dp"
             android:layout_centerHorizontal="true"
-            android:layout_width="250dp"
+            android:layout_weight="3"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:textSize="18sp"
             android:text="Length of Recording" />
 
         <Spinner
-            android:layout_width="wrap_content"
+            android:layout_weight="2"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:id="@+id/length_spinner"
@@ -147,20 +157,22 @@
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="5dp"
         android:gravity="center_vertical"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content">
         <TextView
             android:id="@+id/delete_mode"
             android:layout_margin="5dp"
             android:layout_centerHorizontal="true"
-            android:layout_width="255dp"
+            android:layout_weight="4"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:textSize="18sp"
             android:text="Delete Stored Images \nAfter Transfer" />
 
         <com.kyleduo.switchbutton.SwitchButton
             android:id="@+id/delete_button"
-            android:layout_width="wrap_content"
+            android:layout_weight="2"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             app:kswBackColor="@color/mediumGray"
             app:kswTintColor="@color/colorAccent"
@@ -177,20 +189,22 @@
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="5dp"
         android:gravity="center_vertical"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content">
         <TextView
             android:id="@+id/mic_mode"
             android:layout_margin="5dp"
             android:layout_centerHorizontal="true"
-            android:layout_width="255dp"
+            android:layout_weight="4"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:textSize="18sp"
             android:text="Record From Microphone" />
 
         <com.kyleduo.switchbutton.SwitchButton
             android:id="@+id/mic_button"
-            android:layout_width="wrap_content"
+            android:layout_weight="2"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             app:kswBackColor="@color/mediumGray"
             app:kswTintColor="@color/colorAccent"
@@ -204,7 +218,7 @@
 <LinearLayout
     android:id="@+id/admin_layout"
     android:orientation="vertical"
-    android:layout_width="wrap_content"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content">
     <TextView
         android:layout_margin="5dp"

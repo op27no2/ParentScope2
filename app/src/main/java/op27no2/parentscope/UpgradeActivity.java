@@ -74,6 +74,8 @@ public class UpgradeActivity extends android.support.v4.app.Fragment implements 
 
     private Boolean billingReady = false;
 
+    //TODO NEED TO CHECK SUBSCRIPTINO STATUS TO CANCEL FEATURES IF NOT SUBBED. EVENTUALLY MIGRATE BACK TO BILLING 2.0 and confirm purchasesss.
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         final View view = inflater.inflate(R.layout.upgrade_activity, container, false);
@@ -94,8 +96,8 @@ public class UpgradeActivity extends android.support.v4.app.Fragment implements 
         mData.add("Standard");
         mData.add("Year Sub ");
 
-        mData2.add("Standard");
-        mData2.add("Year Sub ");
+        mData2.add("Standard Subscription, $4.99 per month");
+        mData2.add("Year Sub - discounted for a year subscription");
 
     //    mUtil = new Util(getActivity());
         //TODO DELETE THIS
@@ -363,12 +365,12 @@ public class UpgradeActivity extends android.support.v4.app.Fragment implements 
 
     private void handlePurchase(Purchase mPurchase){
         if(mPurchase.getSku().equals("yearsub1")){
-
-
+            edt.putBoolean("subscribed",true);
+            edt.commit();
         }
         if(mPurchase.getSku().equals("standard1")){
-
-
+            edt.putBoolean("subscribed",true);
+            edt.commit();
         }
 
         Answers.getInstance().logPurchase(new PurchaseEvent()
@@ -429,6 +431,7 @@ public class UpgradeActivity extends android.support.v4.app.Fragment implements 
             @Override
             public void onClick(View v) {
                 queryForProducts(mDataSku.get(position));
+                dialog.dismiss();
             }
         });
 
@@ -473,7 +476,16 @@ public class UpgradeActivity extends android.support.v4.app.Fragment implements 
         } else if (responseCode == BillingClient.BillingResponse.USER_CANCELED) {
             System.out.println("purchase CANCELED");
             // Handle an error caused by a user cancelling the purchase flow.
-        } else {
+        } else if (responseCode == 0) {
+            System.out.println("purchase OK");
+            edt.putBoolean("subscribed",true);
+            edt.commit();
+            Answers.getInstance().logPurchase(new PurchaseEvent()
+                .putItemName("Dialog purchase ")
+                .putItemType("Apparel")
+                .putSuccess(true));
+        }
+        else {
             // Handle any other error codes.
             System.out.println("purchase ERROR "+responseCode);
         }

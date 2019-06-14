@@ -16,56 +16,6 @@
     android:animateLayoutChanges="true"
     tools:context=".MonitoredActivity">
 
-    <TextView
-        android:id="@+id/textViewIntro"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="10dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="20sp"
-        android:text="@string/Introduction" />
-
-
-
-    <TextView
-        android:id="@+id/textView1"
-        android:layout_below="@+id/textViewIntro"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="10dp"
-        android:layout_marginTop="10dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="22sp"
-        android:textStyle="bold"
-        android:text="Select User Type for This Device:" />
-
-
-
-    <Button
-        android:id="@+id/admin"
-        android:layout_below="@+id/textView1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="10dp"
-        android:layout_centerHorizontal="true"
-        style="@style/Widget.AppCompat.Button.Colored"
-        android:text="Administrator"
-        />
-
-    <Button
-        android:id="@+id/monitor"
-        android:layout_below="@+id/admin"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="10dp"
-        android:layout_centerHorizontal="true"
-        style="@style/Widget.AppCompat.Button.Colored"
-        android:text="Monitored Device"
-        />
-
-
-
-
     <LinearLayout
         android:id="@+id/password_layout"
         android:layout_width="match_parent"
@@ -103,6 +53,58 @@
             android:text="Set Password and Proceed"
             />
     </LinearLayout>
+
+
+
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:text="Select User Type for This Device:" />
+
+
+
+    <Button
+        android:id="@+id/admin"
+        android:layout_below="@+id/textView1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:layout_centerHorizontal="true"
+        style="@style/Widget.AppCompat.Button.Colored"
+        android:text="Administrator"
+        />
+
+    <Button
+        android:id="@+id/monitor"
+        android:layout_below="@+id/admin"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:layout_centerHorizontal="true"
+        style="@style/Widget.AppCompat.Button.Colored"
+        android:text="Monitored Device"
+        />
+
+    <TextView
+        android:id="@+id/textViewIntro"
+        android:layout_below="@+id/password_layout"
+        android:layout_centerHorizontal="true"
+        android:layout_margin="10dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="20sp"
+        android:text="@string/Introduction" />
+
+
+
+
+
 
 
 </RelativeLayout>

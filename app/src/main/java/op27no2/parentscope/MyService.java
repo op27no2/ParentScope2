@@ -535,9 +535,12 @@ public class MyService extends Service {
         }
 
         Log.e("adapter", "Current App in foreground is: " + currentApp);
-        System.out.println(isRecording.toString() +" "+ dayCount+" "+ dayStored +" "+ totalCount +" "+ totalStored+" "+frequency);
+
+
+        System.out.println(isRecording.toString() +" "+ dayCount +" "+ dayStored +" "+ totalCount +" "+ totalStored+" "+frequency);
         //TESTING SCREEN RECORD WITH snapchat open
-        if(currentApp.equals("com.snapchat.android") && isRecording==false && (dayCount <= dayStored) && (totalCount <= totalStored) && (getRandomNumber(0,100) <= frequency)){
+       // if(currentApp.equals("com.snapchat.android") && isRecording==false && (dayCount <= dayStored) && (totalCount <= totalStored) && (getRandomNumber(0,100) <= frequency)){
+        if(currentApp.equals("com.snapchat.android") && isRecording==false){
             dayCount = dayCount + 1;
             totalCount = totalCount + 1;
             edt.putInt("stored_today",dayCount);
@@ -587,6 +590,7 @@ public class MyService extends Service {
                 @Override
                 public void run() {
                     stopRecord();
+                    isRecording = false;
                     System.out.println("STAHP RECORD");
 
                 }
@@ -985,7 +989,7 @@ public class MyService extends Service {
         Set<String> set = prefs.getStringSet("already_sent", null);
         filePaths.clear();
 
-
+        //TODO something wrong here? names of files not correct? filepaths not being populated...
         for (int i = 0; i < theNamesOfFiles.length; i++) {
                 //   theNamesOfFiles[i] = filelist[i].getName();
                 if (filelist[i].length() > 0) {
@@ -1070,5 +1074,7 @@ public class MyService extends Service {
         boolean deleted = file.delete();
         System.out.println("file deleted "+deleted+" " + filepath);
     }
+
+
 
 }

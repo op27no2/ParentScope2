@@ -85,7 +85,6 @@ public class SettingsActivity extends Fragment {
         mItems2.add("High");
         mItems2.add("Medium");
         mItems2.add("Low");
-        mItems2.add("Periodic Screenshots");
         ArrayAdapter<String> deviceArrayAdapter2 = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_spinner_item, mItems2);
         deviceArrayAdapter2.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         qualitySpinner.setAdapter(deviceArrayAdapter2);
@@ -176,8 +175,8 @@ public class SettingsActivity extends Fragment {
         });
 
         ArrayList<String> mItems6 = new ArrayList<String>();
-        mItems6.add("5 minutess");
-        mItems6.add("2 minutess");
+        mItems6.add("5 minutes");
+        mItems6.add("2 minutes");
         mItems6.add("60 seconds");
         mItems6.add("30 seconds");
         mItems6.add("15 seconds%");

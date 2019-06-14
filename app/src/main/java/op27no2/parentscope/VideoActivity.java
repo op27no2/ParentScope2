@@ -5,13 +5,17 @@ import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.AlertDialog;
 import android.app.AppOpsManager;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
@@ -41,6 +45,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.MediaController;
 import android.widget.SeekBar;
@@ -73,12 +78,15 @@ public class VideoActivity extends Fragment {
     private ImageView mainImage;
     private Boolean playing = false;
     private Button playButton;
+    private SharedPreferences prefs;
+    private SharedPreferences.Editor edt;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         View view = inflater.inflate(R.layout.video_activity, container, false);
-
+        prefs = getActivity().getSharedPreferences("PREFS", Context.MODE_PRIVATE);
+        edt = prefs.edit();
 
         getActivity().getWindow().setSharedElementEnterTransition(TransitionInflater.from(getActivity()).inflateTransition(R.transition.shared_element_transition));
         mainImage = (ImageView) view.findViewById(R.id.main_image);
@@ -156,15 +164,22 @@ public class VideoActivity extends Fragment {
         playButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(playing){
-                    vv.pause();
-                    playButton.setText("Play");
-                    playing = false;
-                }else if(!playing){
-                    vv.start();
-                    showVideo();
-                    playButton.setText("Pause");
-                    playing = true;
+                if(prefs.getBoolean("subscribed",false) == true) {
+                    //if user is subscribed, let them play
+                    if(playing){
+                        vv.pause();
+                        playButton.setText("Play");
+                        playing = false;
+                    }else if(!playing){
+                        vv.start();
+                        showVideo();
+                        playButton.setText("Pause");
+                        playing = true;
+                    }
+
+                }else{
+                    //if user not subscribed, dialog with option to send to subscriptions
+                    showDialog();
                 }
             }
         });
@@ -215,6 +230,43 @@ public class VideoActivity extends Fragment {
         mainImage.setVisibility(View.VISIBLE);
     }
 
+    public void showDialog(){
+        LayoutInflater inflater = getActivity().getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_pleasesub, null);
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getActivity());
+        alertDialogBuilder.setView(dialogView);
+        AlertDialog alertDialog = alertDialogBuilder.create();
+        //alertDialog.getWindow().setLayout(600, 600); //Controlling width and height.
+        alertDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.parseColor("#00000000")));
+
+        Button btnAdd2 = (Button) dialogView.findViewById(R.id.dialog_button2);
+        Button btnAdd1 = (Button) dialogView.findViewById(R.id.dialog_button1);
+
+        btnAdd1.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+
+                alertDialog.dismiss();
+
+            }
+        });
+
+        btnAdd2.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                UpgradeActivity fragment = new UpgradeActivity();
+                NavActivity myActivity = (NavActivity)getActivity();
+                FragmentChangeListener fc=(FragmentChangeListener)myActivity;
+                fc.replaceFragment(fragment,true);
+                alertDialog.dismiss();
+
+            }
+        });
+
+
+        if(!alertDialog.isShowing())
+        {
+            alertDialog.show();
+        }
+    }
 
 
 }
