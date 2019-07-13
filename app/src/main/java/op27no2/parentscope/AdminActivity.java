@@ -71,7 +71,7 @@ public class AdminActivity extends Fragment implements ClickListener, OnProgress
     private SharedPreferences prefs;
     private SharedPreferences.Editor edt;
     private Context mContext;
-    private int filesToSend = 0;
+    private int filesRemaining = 0;
     private Boolean sendingMultiple = false;
     private int caltext = 2;
     private NumberProgressBar bnp;
@@ -231,11 +231,11 @@ public class AdminActivity extends Fragment implements ClickListener, OnProgress
                         }
                        // Toast.makeText(getActivity(), "Photo was sent successfully", Toast.LENGTH_SHORT).show();
                         System.out.println("Photo was sent successfully");
-                        filesToSend = filesToSend - 1;
-                        if(sendingMultiple && filesToSend>0) {
+                  //      filesToSend = filesToSend - 1;
+                       /* if(sendingMultiple && filesToSend>0) {
                             System.out.println("Sending More: "+filesToSend);
                             sendFile();
-                        }
+                        }*/
                         break;
                     }
 
@@ -291,13 +291,17 @@ public class AdminActivity extends Fragment implements ClickListener, OnProgress
                             System.out.println("data received "+s);
                             if(s.equals("Test String")){
 
-                                if(filesToSend>1){
+                                //shouldn't be sendig files, just request message. Shouldn't be receiving the <100 start message
+                                /*if(filesToSend>1){
                                     sendingMultiple = true;
-                                }
-                                if(filesToSend>0) {
-                                    sendFile();
-                                }
-                                System.out.println("SHOULD SEND FILE ");
+                                }*/
+                              //  if(filesToSend>0) {
+                              //      sendFile();
+                              //  }
+                              //  System.out.println("SHOULD SEND FILE ");
+
+                               //no file to send?
+                                Toast.makeText(mContext, "No Files to Receive", Toast.LENGTH_LONG).show();
 
                             }
 
@@ -339,7 +343,9 @@ public class AdminActivity extends Fragment implements ClickListener, OnProgress
                     }
 
                     case zMessageType.DIGEST_DID_NOT_MATCH: {
-                        Toast.makeText(mContext, "Photo was received, but didn't come through correctly", Toast.LENGTH_SHORT).show();
+                        if(filesRemaining != 0) {
+                            Toast.makeText(mContext, "Photo was received, but didn't come through correctly", Toast.LENGTH_SHORT).show();
+                        }
                         break;
                     }
 
@@ -359,6 +365,7 @@ public class AdminActivity extends Fragment implements ClickListener, OnProgress
                     case zMessageType.FILES_REMAINING: {
                         byte[] myBytes = ((byte[]) message.obj);
                         String remaining = new String(myBytes);
+                        filesRemaining = Integer.parseInt(remaining);
                         System.out.println("admin files remaining "+remaining);
                         /*if(progressDialogReceive == null) {
                             progressDialogReceive = new ProgressDialog(getActivity());
@@ -370,7 +377,11 @@ public class AdminActivity extends Fragment implements ClickListener, OnProgress
                         }else{
                             progressDialogReceive.setMessage("Receiving Files: "+remaining +" files remaining");
                         }*/
-                        progressText.setText("Receiving Files: "+remaining +" files remaining");
+                        if(remaining.equals("0")){
+                            Toast.makeText(mContext, "No Files to Receive", Toast.LENGTH_LONG).show();
+                        }else {
+                            progressText.setText("Receiving Files: " + remaining + " files remaining");
+                        }
 
                         break;
                     }
@@ -401,7 +412,7 @@ public class AdminActivity extends Fragment implements ClickListener, OnProgress
                             int p = Integer.parseInt(percent);
                            // progressDialogReceive.setProgress(p);
                             bnp.setProgress(p);
-                            if(p == 100 && filesToSend == 1){
+                            if(p == 100 && filesRemaining == 0){
                                 progressLayout.setVisibility(View.GONE);
                             }
                         }
@@ -604,7 +615,7 @@ public class AdminActivity extends Fragment implements ClickListener, OnProgress
                         System.out.println("canceled client thread");
                         MyApplication.clientThread.cancel();
                     }
-                    MyApplication.clientThread = new zClientThread(device, MyApplication.clientHandler, "photo", filesToSend);
+                    MyApplication.clientThread = new zClientThread(device, MyApplication.clientHandler, "photo", 1);
                     MyApplication.clientThread.start();
                 }
             }
@@ -613,11 +624,11 @@ public class AdminActivity extends Fragment implements ClickListener, OnProgress
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        System.out.println("DELAYED FILE TRANSFER TEST "+ filesToSend +" remaining");
+                        System.out.println("Admin delayed pull message request");
 
                         //String videopath = prefs.getString("testfilepath", "");
                         if(filePaths.size()>0) {
-                            String videopath = filePaths.get(filePaths.size() - filesToSend);
+                            String videopath = filePaths.get(filePaths.size());
                             System.out.println("filepath: " + videopath);
                             byte[] myBytes = new byte[0];
                             try {
@@ -990,7 +1001,7 @@ public class AdminActivity extends Fragment implements ClickListener, OnProgress
 
     }
 
-
+//TODO DO I NEED THIS FOR ADMIN ACTIVITY
     public void populateList(){
 
         if(deviceSpinner.getAdapter() != null && deviceSpinner.getAdapter().getCount()>0) {
@@ -1028,7 +1039,7 @@ public class AdminActivity extends Fragment implements ClickListener, OnProgress
                 }
             }
 
-            filesToSend = filePaths.size();
+            //filesToSend = filePaths.size();
             mAdapter.notifyDataSetChanged();
 
         }

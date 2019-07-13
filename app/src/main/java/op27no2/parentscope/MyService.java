@@ -134,7 +134,7 @@ public class MyService extends Service {
 
     @Override
     public void onCreate() {
-        System.out.println("ParentScope service onCreate");
+        System.out.println("Heron service onCreate");
         prefs = MyApplication.getAppContext().getSharedPreferences(
                 "PREFS", Context.MODE_PRIVATE);
         edt = prefs.edit();
@@ -248,8 +248,8 @@ public class MyService extends Service {
     @SuppressLint("HandlerLeak")
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        System.out.println("ParentScope service started");
-        Toast.makeText(this, "ParentScope Started", Toast.LENGTH_SHORT).show();
+        System.out.println("Heron service started");
+        Toast.makeText(this, "Heron Started", Toast.LENGTH_SHORT).show();
 
 
 
@@ -346,6 +346,10 @@ public class MyService extends Service {
                         }else{
                             Set<String> set = prefs.getStringSet("already_sent", null);
                             String path = filePaths.get(filePaths.size() - filesToSend);
+                            System.out.println("filepaths size:" + filePaths.size()+ " filesToSend: "+filesToSend);
+                            System.out.println("filepath: " + path);
+                           // System.out.println("filepath sep index: " + path.lastIndexOf(File.separator)+1);
+                            System.out.println("filepath sep index: " + path.lastIndexOf("/")+1);
                             //get filename from path
                             set.add(path.substring(path.lastIndexOf(File.separator)+1));
                             edt.putStringSet("already_sent", set);
@@ -665,8 +669,8 @@ public class MyService extends Service {
 
     @Override
     public void onDestroy() {
-        System.out.println("ParentScope service destroyed");
-        Toast.makeText(this, "ParentScope destroyed", Toast.LENGTH_SHORT).show();
+        System.out.println("Heron service destroyed");
+        Toast.makeText(this, "Heron Service Destroyed", Toast.LENGTH_SHORT).show();
 
      /*   Intent intent = new Intent("restartApps");
         sendBroadcast(intent);
@@ -751,6 +755,7 @@ public class MyService extends Service {
         }
         mVirtualDisplay.release();
         mMediaRecorder.release();
+        mMediaRecorder = null;
     }
 
     private VirtualDisplay createVirtualDisplay() {
@@ -766,8 +771,11 @@ public class MyService extends Service {
     private class MediaProjectionCallback extends MediaProjection.Callback {
         @Override
         public void onStop() {
+            System.out.println("Recording STOPPED FROM PROJECTION CALLBACK");
             mMediaRecorder.stop();
             mMediaRecorder.reset();
+            mMediaRecorder.release();
+            mMediaRecorder = null;
             mMediaProjection = null;
             stopScreenSharing();
         }
@@ -995,10 +1003,10 @@ public class MyService extends Service {
                 if (filelist[i].length() > 0) {
 
                     //check if we have already sent the file, if not, add to filePaths that are sendable
-                    if(set!=null && !set.contains(filelist[i].getName())) {
+                  //  if(set!=null && !set.contains(filelist[i].getName())) {
                         filePaths.add(filelist[i].getAbsolutePath());
                         System.out.println("Files: " + filePaths);
-                    }
+                  //  }
                 }
             }
 
