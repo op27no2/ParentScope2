@@ -1,9 +1,11 @@
 package op27no2.parentscope;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.LocalBroadcastManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -32,6 +34,7 @@ public class SettingsActivity extends Fragment {
 
     private LinearLayout adminLayout;
     private LinearLayout monitoredLayout;
+    public static String BROADCAST_ACTION = "op27no2.parentscope.android.broadcasttest.SHOWTOAST";
 
 
     @Override
@@ -94,6 +97,14 @@ public class SettingsActivity extends Fragment {
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
                 edt.putInt("quality_setting",i);
                 edt.commit();
+
+                System.out.println("quality changed");
+                Intent intent = new Intent("custom-event-name");
+                // You can also include some extra data.
+                intent.putExtra("message", "This is my message!");
+                LocalBroadcastManager.getInstance(getActivity()).sendBroadcast(intent);
+
+
             }
 
             public void onNothingSelected(AdapterView<?> adapterView) {

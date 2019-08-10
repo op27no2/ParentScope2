@@ -65,7 +65,7 @@ public class NavActivity extends AppCompatActivity implements
         edt = prefs.edit();
 
         checkPermissions();
-
+        System.out.println("Nav Activity Started");
 
         deleteButton = (ImageView) findViewById(R.id.delete_button);
         deleteButton.setOnClickListener(new View.OnClickListener() {
@@ -93,12 +93,11 @@ public class NavActivity extends AppCompatActivity implements
         });
 
        // goToFragment(new AdminActivity(), false);
-        checkLoginType();
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
 
 
 
-
+        System.out.println("Setting up DuoDrawer");
         final DuoDrawerLayout drawerLayout = (DuoDrawerLayout) findViewById(R.id.drawer);
         DuoDrawerToggle drawerToggle = new DuoDrawerToggle(this, drawerLayout, toolbar,
                 R.string.navigation_drawer_open,
@@ -107,6 +106,7 @@ public class NavActivity extends AppCompatActivity implements
         drawerLayout.setDrawerListener(drawerToggle);
         drawerToggle.syncState();
 
+        System.out.println("Setting up DuoDrawer options");
         final ArrayList<String> options = new ArrayList<String>(Arrays.asList(getResources().getStringArray(R.array.options)));
 
         DuoMenuView duoMenuView = (DuoMenuView) findViewById(R.id.menu);
@@ -140,11 +140,13 @@ public class NavActivity extends AppCompatActivity implements
                 // Navigate to the right fragment
                 switch (position) {
                     case 0:
+                        System.out.println("DuoDrawer 0");
                         checkLoginType();
 
                         break;
 
                     case 1:
+                        System.out.println("DuoDrawer 1");
                         goToFragment(new SettingsActivity(), false, "settings");
                         calendar.setVisibility(View.GONE);
                         delete.setVisibility(View.GONE);
@@ -152,6 +154,7 @@ public class NavActivity extends AppCompatActivity implements
                         break;
 
                     case 2:
+                        System.out.println("DuoDrawer 2");
                         goToFragment(new HelpActivity(), false, "help");
                         calendar.setVisibility(View.GONE);
                         delete.setVisibility(View.GONE);
@@ -159,6 +162,7 @@ public class NavActivity extends AppCompatActivity implements
                         break;
 
                     case 3:
+                        System.out.println("DuoDrawer 3");
                         goToFragment(new UpgradeActivity(), false, "upgrade");
                         calendar.setVisibility(View.GONE);
                         delete.setVisibility(View.GONE);
@@ -167,6 +171,7 @@ public class NavActivity extends AppCompatActivity implements
 
 
                     default:
+                        System.out.println("DuoDrawer Default");
                         goToFragment(new AdminActivity(), false, "admin");
                         if(prefs.getString("mode","").equals("admin")){
                             calendar.setVisibility(View.VISIBLE);
@@ -185,6 +190,11 @@ public class NavActivity extends AppCompatActivity implements
             }
 
         });
+
+
+
+        checkLoginType();
+
 
     }
 

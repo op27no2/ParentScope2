@@ -55,6 +55,7 @@ public class zClientThread extends Thread {
 
         } catch (IOException ioe) {
             handler.sendEmptyMessage(zMessageType.COULD_NOT_CONNECT);
+
             Log.e(TAG, ioe.toString());
             try {
                 socket.close();

