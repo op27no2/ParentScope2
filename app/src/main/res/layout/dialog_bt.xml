@@ -3,16 +3,17 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="300dp"
-    android:background="#FFFFFF"
+    android:layout_height="wrap_content"
+    android:padding="2dp"
+    android:background="@color/colorAccent"
     android:animateLayoutChanges="true"
     tools:context=".MonitoredActivity">
 
 
     <RelativeLayout
         android:id="@+id/calendar_layout"
-        android:paddingTop="40dp"
-        android:paddingBottom="40dp"
+        android:background="#FFFFFF"
+        android:padding="15dp"
         android:orientation="vertical"
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"

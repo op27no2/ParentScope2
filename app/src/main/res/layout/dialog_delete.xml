@@ -2,18 +2,18 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_margin="20dp"
     android:layout_width="match_parent"
-    android:layout_height="300dp"
-    android:background="#FFFFFF"
+    android:padding="2dp"
+    android:layout_height="wrap_content"
+    android:background="@color/colorAccent"
     android:animateLayoutChanges="true"
     tools:context=".MonitoredActivity">
 
 
     <RelativeLayout
-        android:paddingTop="40dp"
+        android:background="#FFFFFF"
+        android:padding="15dp"
         android:id="@+id/normal_layout"
-        android:paddingBottom="40dp"
         android:orientation="vertical"
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
@@ -22,11 +22,11 @@
     <TextView
         android:id="@+id/textView1"
         android:layout_margin="5dp"
+        android:layout_width="match_parent"
+        android:gravity = "center"
         android:layout_centerHorizontal="true"
-        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="20sp"
-        android:textAlignment="center"
         android:text="Make Sure Target Devices Are Paried" />
 
 

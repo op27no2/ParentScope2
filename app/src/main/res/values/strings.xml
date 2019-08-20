@@ -43,14 +43,20 @@
 
     <string name="appbar_scrolling_view_behavior" translatable="false">android.support.design.widget.AppBarLayout$ScrollingViewBehavior</string>
 
-    <string name="adminhelp"> Select the monitored device under \"target devices\" to view and retrieve monitored screenshots/videos. Press \"retrieve data\" to download files. Press the Calendar icon to adjust download settings</string>
+    <string name="adminhelp"> Select the monitored device under \"target devices\" to view and retrieve monitored screenshots/videos.\n\nPress \"retrieve data\" to download files.\n\nPress the Calendar icon to adjust download settings</string>
     <string name="calendar"> Maximum Files to Receive</string>
+
+    <string name="helppage"> Heron is an audit-style monitoring app. The monitored device runs a service that takes videos of Snapchat use, and can be set to probablistically record (i.e. 10% of interactions are recorded). The admin device can download the videos from multiple monitored users.\n\nAll transfers are done through bluetooth between the paired devices, there is no privacy risk with sensitive information being stored on a website \n\nThe same Play Store App is used for both monitored and admin devices. \n\nNo separate or third party sign-ups, accounts, or payment is necessary, everything is done through Google Play.\n\nWith current Android releases, only Rooted apps can potentially stop an applications from being uninstalled by the user. If you are facing this issue, we recommend finding a strong Rooted application that allows you to control installations. </string>
+
 
 
     <string-array name="options">
         <item>Home</item>
         <item>Settings</item>
-        <item>Help &amp; Feedback</item>
+<!--
+       <item>Help &amp; Feedback</item>
+-->
+        <item>Help/About</item>
         <item>Subscription</item>
     </string-array>
 

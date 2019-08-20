@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="op27no2.parentscope">
+    package="op27no2.parentscope2">
 
 
 
@@ -21,7 +21,7 @@
 
 
     <application
-        android:name="MyApplication"
+        android:name="op27no2.parentscope2.MyApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -32,7 +32,7 @@
             android:name="io.fabric.ApiKey"
             android:value="69bbc80edd2812e56eeb7ffce309a4a3c7468d50"
             />
-        <activity android:name=".NavActivity">
+        <activity android:name="op27no2.parentscope2.NavActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -41,54 +41,54 @@
         </activity>
 
         <activity
-            android:name=".RecordActivity"
+            android:name="op27no2.parentscope2.RecordActivity"
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
             >
         </activity>
         <activity
-            android:name=".VideoActivity"
+            android:name="op27no2.parentscope2.VideoActivity"
             >
         </activity>
 
         <activity
-            android:name=".MonitoredActivity"
+            android:name="op27no2.parentscope2.MonitoredActivity"
             >
         </activity>
         <activity
-            android:name=".PasswordActivity"
+            android:name="op27no2.parentscope2.PasswordActivity"
             >
         </activity>
 
         <activity
-            android:name=".AcquireScreenshotPermissionIntent"
+            android:name="op27no2.parentscope2.AcquireScreenshotPermissionIntent"
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
             >
 
         </activity>
         <activity
-            android:name=".BriefActivity"
+            android:name="op27no2.parentscope2.BriefActivity"
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
             >
 
         </activity>
-        <activity android:name=".DeviceListActivity"
+        <activity android:name="op27no2.parentscope2.DeviceListActivity"
             android:label="@string/select_device"
             android:theme="@android:style/Theme.Dialog"
             android:configChanges="orientation|keyboardHidden"/>
 
-        <activity android:name=".BluetoothChat"
+        <activity android:name="op27no2.parentscope2.BluetoothChat"
             android:label="btchat"
 
             />
 
         <service
-            android:name=".MyService"
+            android:name="op27no2.parentscope2.MyService"
             android:enabled="true"
             android:stopWithTask="false"
             android:exported="true"></service>
 
         <receiver
-            android:name=".RestarterBroadcastReceiver"
+            android:name="op27no2.parentscope2.RestarterBroadcastReceiver"
             android:enabled="true"
             android:exported="true"
             android:label="RestartServiceWhenStopped">
@@ -96,7 +96,7 @@
                 <action android:name="com.parentscope.ReceiverDem" />
             </intent-filter>
         </receiver>
-        <receiver android:name=".BootBroadcastReceiver" android:enabled="true" android:exported="true" >
+        <receiver android:name="op27no2.parentscope2.BootBroadcastReceiver" android:enabled="true" android:exported="true" >
             <intent-filter>
                     <category android:name="android.intent.category.DEFAULT"/>
                     <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED"/>

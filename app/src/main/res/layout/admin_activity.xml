@@ -48,73 +48,70 @@
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="@color/colorPrimary"/>
-    <LinearLayout
-        android:visibility="gone"
-        android:id="@+id/progress_view"
-        android:orientation="vertical"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical">
-
-        <TextView
-            android:id="@+id/progress_text"
-            android:paddingTop="10dp"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginLeft="10dp"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:textSize="12sp"
-            android:text="Retrieving Files:" />
 
         <LinearLayout
+            android:visibility="gone"
+            android:id="@+id/progress_view"
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:weightSum="10"
             android:layout_gravity="center_vertical">
-
-        <com.daimajia.numberprogressbar.NumberProgressBar
-            android:id="@+id/progress_bar"
+        <LinearLayout
             android:layout_width="0dp"
+            android:orientation="vertical"
             android:layout_weight="9"
-            android:layout_height="40dp"
-            android:paddingLeft="20dp"
-            android:paddingRight="20dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical">
 
-            custom:progress_unreached_color="#CCCCCC"
-            custom:progress_reached_color="@color/colorAccent"
+            <TextView
+                android:id="@+id/progress_text"
+                android:paddingTop="10dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginLeft="10dp"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:textSize="12sp"
+                android:text="Retrieving Files:" />
 
-            custom:progress_unreached_bar_height="0.75dp"
-            custom:progress_reached_bar_height="1.5dp"
+            <com.daimajia.numberprogressbar.NumberProgressBar
+                android:id="@+id/progress_bar"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:paddingLeft="20dp"
+                android:paddingRight="20dp"
 
-            custom:progress_text_size="10sp"
-            custom:progress_text_color="@color/colorPrimaryDark"
-            custom:progress_text_offset="1dp"
-            custom:progress_text_visibility="visible"
+                custom:progress_unreached_color="#CCCCCC"
+                custom:progress_reached_color="@color/colorAccent"
 
-            custom:progress_max="100"
-            custom:progress_current="0"
-            />
+                custom:progress_unreached_bar_height="0.75dp"
+                custom:progress_reached_bar_height="1.5dp"
 
+                custom:progress_text_size="10sp"
+                custom:progress_text_color="@color/colorPrimaryDark"
+                custom:progress_text_offset="1dp"
+                custom:progress_text_visibility="visible"
+
+                custom:progress_max="100"
+                custom:progress_current="0"
+                />
+            </LinearLayout>
             <ImageView
-                android:visibility="visible"
                 android:id="@+id/cancel_button"
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="40dp"
                 android:layout_marginRight="10dp"
-                android:src="@drawable/delete2"
-                android:layout_gravity="right"
+                android:src="@drawable/ic_action_clear"
+                android:layout_gravity="center_vertical"
                 />
 
-        </LinearLayout>
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@color/colorPrimary"/>
     </LinearLayout>
 
-
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/colorPrimary"/>
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/my_recycler_view"
