@@ -94,10 +94,10 @@ public class UpgradeActivity extends android.support.v4.app.Fragment implements 
 
 
         mData.add("Standard");
-        mData.add("Year Sub ");
+        mData.add("12 months ");
 
-        mData2.add("Standard Subscription, $4.99 per month");
-        mData2.add("Year Sub - discounted for a year subscription");
+        mData2.add("Standard Subscription, $3.99 per quarter");
+        mData2.add("Discounted to $9.99 for a year subscription");
 
     //    mUtil = new Util(getActivity());
         //TODO DELETE THIS
