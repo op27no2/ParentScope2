@@ -261,22 +261,22 @@ public class NavActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void replaceFragment(Fragment fragment, Boolean addToStack) {
+    public void replaceFragment(Fragment fragment, Boolean addToStack, String tag) {
 
         FragmentManager fragmentManager = getSupportFragmentManager();;
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.container, fragment, fragment.toString());
+        fragmentTransaction.replace(R.id.container, fragment, tag);
         if(addToStack) {
             fragmentTransaction.addToBackStack(fragment.toString());
         }
         fragmentTransaction.commit();
     }
     @Override
-    public void replaceFragmentWithTransition(Fragment fragment, Boolean addToStack, ImageView img) {
+    public void replaceFragmentWithTransition(Fragment fragment, Boolean addToStack, ImageView img, String tag) {
 
         FragmentManager fragmentManager = getSupportFragmentManager();;
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.container, fragment, fragment.toString());
+        fragmentTransaction.replace(R.id.container, fragment, tag);
         fragmentTransaction.addSharedElement(img, ViewCompat.getTransitionName(img));
         if(addToStack) {
             fragmentTransaction.addToBackStack(fragment.toString());

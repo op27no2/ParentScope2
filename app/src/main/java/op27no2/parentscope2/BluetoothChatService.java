@@ -306,6 +306,7 @@ public class BluetoothChatService {
 	private class AcceptThread extends Thread {
 		// The local server socket
 		private final BluetoothServerSocket mmServerSocket;
+		private boolean running = true;
 		private String mSocketType = "acceptthread";
 		public AcceptThread() {
 			BluetoothServerSocket tmp = null;
@@ -316,6 +317,7 @@ public class BluetoothChatService {
 						.listenUsingRfcommWithServiceRecord(NAME, MY_UUID);
 			} catch (IOException e) {
 				Log.e(TAG, "Socket Type: " + mSocketType + "listen() failed", e);
+				running=false;
 			}
 			mmServerSocket = tmp;
 		}
@@ -329,7 +331,7 @@ public class BluetoothChatService {
 			BluetoothSocket socket = null;
 
 			// Listen to the server socket if we're not connected
-			while (mState != STATE_CONNECTED) {
+			while (mState != STATE_CONNECTED && running==true) {
 				try {
 					// This is a blocking call and will only return on a
 					// successful connection or an exception

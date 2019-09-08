@@ -126,7 +126,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
                 Bundle args = new Bundle();
                 args.putString("bitmap_uri", uri.toString());
                 frag.setArguments(args);
-                showOtherFragment(frag, true, holder.imageView);
+                showOtherFragment(frag, true, holder.imageView, "video");
 
             }
         });
@@ -172,11 +172,11 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
     }
 
 
-    public void showOtherFragment(Fragment fr, Boolean addToStack, ImageView img)
+    public void showOtherFragment(Fragment fr, Boolean addToStack, ImageView img, String tag)
     {
         NavActivity myActivity = (NavActivity)mContext;
         FragmentChangeListener fc=(FragmentChangeListener)myActivity;
-        fc.replaceFragmentWithTransition(fr,addToStack, img);
+        fc.replaceFragmentWithTransition(fr,addToStack, img, tag);
     }
 
 

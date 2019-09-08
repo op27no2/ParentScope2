@@ -217,7 +217,7 @@ public class VideoActivity extends Fragment {
                 UpgradeActivity fragment = new UpgradeActivity();
                 NavActivity myActivity = (NavActivity)getActivity();
                 FragmentChangeListener fc=(FragmentChangeListener)myActivity;
-                fc.replaceFragment(fragment,true);
+                fc.replaceFragment(fragment,true, "upgrade");
                 alertDialog.dismiss();
 
             }

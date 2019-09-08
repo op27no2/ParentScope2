@@ -43,7 +43,7 @@ public class SelectActivity extends Fragment {
             @Override
             public void onClick(View view) {
                 AdminActivity frag = new AdminActivity();
-                showOtherFragment(frag, false);
+                showOtherFragment(frag, false, "admin");
 
                 edt.putString("type","admin");
                 edt.commit();
@@ -69,7 +69,7 @@ public class SelectActivity extends Fragment {
                 edt.commit();
 
                 MonitoredActivity frag = new MonitoredActivity();
-                showOtherFragment(frag, false);
+                showOtherFragment(frag, false, "password");
             }
         });
 
@@ -84,11 +84,11 @@ public class SelectActivity extends Fragment {
         Intent btintent2 = null;
         if(type.equals("monitored")){
             MonitoredActivity frag = new MonitoredActivity();
-            showOtherFragment(frag, false);
+            showOtherFragment(frag, false, "password");
 
         }else if(type.equals("admin")){
             AdminActivity frag = new AdminActivity();
-            showOtherFragment(frag, false);
+            showOtherFragment(frag, false, "admin");
         }
     }
 
@@ -104,10 +104,10 @@ public class SelectActivity extends Fragment {
 
     }
 
-    public void showOtherFragment(Fragment fr, Boolean addToStack)
+    public void showOtherFragment(Fragment fr, Boolean addToStack, String tag)
     {
         FragmentChangeListener fc=(FragmentChangeListener)getActivity();
-        fc.replaceFragment(fr,addToStack);
+        fc.replaceFragment(fr,addToStack,tag);
     }
 
 

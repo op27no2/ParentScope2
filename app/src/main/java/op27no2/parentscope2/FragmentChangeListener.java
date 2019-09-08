@@ -5,6 +5,6 @@ import android.widget.ImageView;
 
 public interface FragmentChangeListener
 {
-    public void replaceFragment(Fragment fragment, Boolean addToStack);
-    public void replaceFragmentWithTransition(Fragment fragment, Boolean addToStack, ImageView img);
+    public void replaceFragment(Fragment fragment, Boolean addToStack, String tag);
+    public void replaceFragmentWithTransition(Fragment fragment, Boolean addToStack, ImageView img, String tag);
 }

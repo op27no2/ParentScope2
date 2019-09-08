@@ -46,7 +46,7 @@ public class PasswordActivity extends Fragment {
                 String pw = prefs.getString("Password","");
                 if(pw.equals(editText.getText().toString())){
                     MonitoredActivity frag = new MonitoredActivity();
-                    showOtherFragment(frag, false);
+                    showOtherFragment(frag, false, "password");
 
                     InputMethodManager imm = (InputMethodManager) getActivity().getSystemService( Context.INPUT_METHOD_SERVICE );
                     View f = getActivity().getCurrentFocus();
@@ -80,10 +80,10 @@ public class PasswordActivity extends Fragment {
     }
 
 
-    public void showOtherFragment(Fragment fr, Boolean addToStack)
+    public void showOtherFragment(Fragment fr, Boolean addToStack, String tag)
     {
         FragmentChangeListener fc=(FragmentChangeListener)getActivity();
-        fc.replaceFragment(fr, addToStack);
+        fc.replaceFragment(fr, addToStack, tag);
     }
 
 
